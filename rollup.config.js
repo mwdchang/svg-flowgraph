@@ -8,11 +8,17 @@ import pkg from './package.json';
 
 const input = ['src/main.js'];
 
+const external = ['lodash', 'd3'];
+const globals = {
+  lodash: '_',
+  d3: 'd3'
+};
+
 
 export default [
   // UMD
   {
-    external: ['lodash', 'd3'],
+    external,
     input,
     plugins: [
       // eslint(),
@@ -31,15 +37,12 @@ export default [
       esModule: false,
       exports: 'named',
       sourcemap: true,
-      globals: {
-        lodash: '_',
-        d3: 'd3'
-      }
+      globals
     }
   },
   // ESM
   {
-    external: ['lodash', 'd3'],
+    external,
     input,
     plugins: [
       // eslint(),
@@ -57,20 +60,14 @@ export default [
         format: 'esm',
         exports: 'named',
         sourcemap: true,
-        globals: {
-          lodash: '_',
-          d3: 'd3'
-        }
+        globals
       },
       {
         dir: 'dist/cjs',
         format: 'cjs',
         exports: 'named',
         sourcemap: true,
-        globals: {
-          lodash: '_',
-          d3: 'd3'
-        }
+        globals
       }
     ]
   }
