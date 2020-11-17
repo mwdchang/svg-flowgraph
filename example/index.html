@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js" integrity="sha512-90vH1Z83AJY9DmlWa8WkjkV79yfS2n2Oxhsi2dZbIv0nC4E6m5AbH8Nh156kkM7JePmqD6tcZsfad1ueoaovww==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js" integrity="sha512-L5K9Bf852XyB+wrvRFGwWzfhVI+TZqJlgwzX9yvrfhILuzIZfrcQO4au9D9eVDnkQ6oqYr9v2QwJdFo+eKE50Q==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js" integrity="sha512-psLUZfcgPmi012lcpVHkWoOqyztollwCGu4w/mXijFMK/YcdUdP06voJNVOJ7f/dUIlO2tGlDLuypRyXX2lcvQ==" crossorigin="anonymous"></script>
+<script src="./compound-graph.min.js"></script>
+<title>Demo Graph</title>
+</head>
+<body>
+  <div id="test" style="width:100%; height: 450px; border: 1px solid #888; background: #FCFCFC" />
+</body>
+<script>
+
+const pathFn = d3.line() .x(d => d.x) .y(d => d.y);
+
+class TestRenderer extends myLibrary.SVGRenderer {
+  renderNode(nodeSelection) {
+    nodeSelection.each(function() {
+      const selection = d3.select(this);
+
+      selection.attr('transform', d => `translate(${-d.width * 0.5}, ${-d.height * 0.5})`);
+
+      if (selection.datum().nodes) {
+        selection.append('rect')
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr('width', d => d.width)
+          .attr('height', d => d.height)
+          .style('fill', d => {
+            if (d.collapsed === true) return '#f80';
+            return d.nodes ? '#F8F8F8' : '#FE0';
+          })
+          .style('stroke', '#888')
+          .style('stroke-width', 2);
+      } else {
+        selection.append('rect')
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr('width', d => d.width)
+          .attr('height', d => d.height)
+          .style('fill', '#DDD')
+          .style('stroke', '#888')
+          .style('stroke-width', 1);
+      }
+    });
+    nodeSelection.append('text')
+      .attr('x', d => d.nodes ? 0 : 0.5 * d.width)
+      .attr('y', d => d.nodes ? -5 : 25)
+      .style('fill', '#333')
+      .style('font-weight', '600')
+      .style('text-anchor', d => d.nodes ? 'left' : 'middle')
+      .text(d => d.data.label);
+  }
+
+  renderEdge(edgeSelection) {
+    edgeSelection.append('path')
+      .classed('edge-path', true)
+      .attr('cursor', 'pointer')
+      .attr('d', d => pathFn(d.points))
+      .style('fill', 'none')
+      .style('stroke', '#000')
+      .style('stroke-width', 2)
+      .attr('marker-end', d => {
+        const source = d.data.source.replace(/\s/g, '');
+        const target = d.data.target.replace(/\s/g, '');
+        return `url(#arrowhead-${source}-${target})`;
+      })
+      .attr('marker-start', d => {
+        const source = d.data.source.replace(/\s/g, '');
+        const target = d.data.target.replace(/\s/g, '');
+        return `url(#start-${source}-${target})`;
+      });
+  }
+}
+
+// An example Adapter using Dagre (Not compounded)
+class DagreAdapter {
+  constructor(options) {
+    this.nodeWidth = options.nodeWidth;;
+    this.nodeHeight = options.nodeHeight;
+  }
+
+  makeRenderingGraph(graphData) {
+    const result = {
+      nodes: [],
+      edges: []
+    };
+    graphData.nodes.forEach(n => {
+      result.nodes.push({
+        id: n.id,
+        label: n.label,
+        width: this.nodeWidth,
+        height: this.nodeHeight,
+        data: n,
+      });
+    });
+    graphData.edges.forEach(e => {
+      result.edges.push({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        data: e
+      });
+    });
+    return result;
+  }
+
+  async run(renderGraph) {
+    const g = new dagre.graphlib.Graph();
+    g.setGraph({});
+    g.setDefaultEdgeLabel(function() { return {}; });
+
+    renderGraph.nodes.forEach(n => {
+      g.setNode(n.id,    { label: n.label,  width: n.width, height: n.height });
+    });
+
+    renderGraph.edges.forEach(e => {
+      g.setEdge(e.source, e.target);
+    });
+    dagre.layout(g);
+
+    renderGraph.nodes.forEach(n => {
+      const node = g.node(n.id);
+      n.x = node.x;
+      n.y = node.y;
+    });
+    renderGraph.edges.forEach(e => {
+      const edge = g.edge(e.source, e.target);
+      e.points = edge.points;
+    });
+
+    renderGraph.width = 350;
+    renderGraph.height = 350;
+    return renderGraph;
+  }
+}
+
+const graph = {
+  nodes: [
+    { id: 'Node A', label: 'Node A' },
+    { id: 'Node B', label: 'Node B' },
+    { id: 'Node C', label: 'Node C' }
+  ],
+  edges: [
+    { id: 'Edge 1', source: 'Node A', target: 'Node B' }
+  ]
+};
+
+
+
+const renderer = new TestRenderer({
+  el: document.getElementById('test'),
+  adapter: new DagreAdapter({ nodeWidth: 100, nodeHeight: 50 }),
+  renderMode: 'basic',
+  useDebugger: false,
+  useEdgeControl: false
+});
+
+renderer.setData(graph);
+renderer.render();
+</script>
+</html>
