@@ -10,7 +10,7 @@
 <title>Demo Graph</title>
 </head>
 <body>
-  <div id="test" style="width:100%; height: 450px; border: 1px solid #888; background: #FCFCFC" />
+  <div id="test" style="margin: 10px; width:50%; height: 450px; border: 1px solid #888; background: #FCFCFC" />
 </body>
 <script>
 
@@ -21,20 +21,14 @@ class TestRenderer extends myLibrary.SVGRenderer {
     nodeSelection.each(function() {
       const selection = d3.select(this);
 
-      selection.attr('transform', d => `translate(${-d.width * 0.5}, ${-d.height * 0.5})`);
-
       if (selection.datum().nodes) {
         selection.append('rect')
           .attr('x', 0)
           .attr('y', 0)
           .attr('width', d => d.width)
           .attr('height', d => d.height)
-          .style('fill', d => {
-            if (d.collapsed === true) return '#f80';
-            return d.nodes ? '#F8F8F8' : '#FE0';
-          })
-          .style('stroke', '#888')
-          .style('stroke-width', 2);
+          .style('fill', '#EEF')
+          .style('stroke', '#888');
       } else {
         selection.append('rect')
           .attr('x', 0)
@@ -42,8 +36,7 @@ class TestRenderer extends myLibrary.SVGRenderer {
           .attr('width', d => d.width)
           .attr('height', d => d.height)
           .style('fill', '#DDD')
-          .style('stroke', '#888')
-          .style('stroke-width', 1);
+          .style('stroke', '#CCC');
       }
     });
     nodeSelection.append('text')
@@ -57,24 +50,30 @@ class TestRenderer extends myLibrary.SVGRenderer {
 
   renderEdge(edgeSelection) {
     edgeSelection.append('path')
-      .classed('edge-path', true)
-      .attr('cursor', 'pointer')
       .attr('d', d => pathFn(d.points))
       .style('fill', 'none')
       .style('stroke', '#000')
-      .style('stroke-width', 2)
       .attr('marker-end', d => {
-        const source = d.data.source.replace(/\s/g, '');
-        const target = d.data.target.replace(/\s/g, '');
+        const source = d.source.replace(/\s/g, '');
+        const target = d.target.replace(/\s/g, '');
         return `url(#arrowhead-${source}-${target})`;
       })
       .attr('marker-start', d => {
-        const source = d.data.source.replace(/\s/g, '');
-        const target = d.data.target.replace(/\s/g, '');
+        const source = d.source.replace(/\s/g, '');
+        const target = d.target.replace(/\s/g, '');
         return `url(#start-${source}-${target})`;
       });
   }
 }
+
+const traverse = (root, callBackFn, p) => {
+  callBackFn(root, p);
+  if (root.nodes) {
+    for (let i = 0; i < root.nodes.length; i++) {
+      traverse(root.nodes[i], callBackFn, root);
+    }
+  }
+};
 
 // An example Adapter using Dagre (Not compounded)
 class DagreAdapter {
@@ -84,56 +83,68 @@ class DagreAdapter {
   }
 
   makeRenderingGraph(graphData) {
-    const result = {
-      nodes: [],
-      edges: []
-    };
-    graphData.nodes.forEach(n => {
-      result.nodes.push({
-        id: n.id,
-        label: n.label,
-        width: this.nodeWidth,
-        height: this.nodeHeight,
-        data: n,
-      });
+    traverse(graphData, (node, parent) => {
+      if (! node.nodes) {
+        node.width = this.nodeWidth;
+        node.height = this.nodeHeight;
+      }
+      if (parent) node.parent = parent.id;
+      node.data = node;
     });
+
     graphData.edges.forEach(e => {
-      result.edges.push({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        data: e
-      });
+      e.data = e;
     });
-    return result;
+    return graphData;
   }
 
   async run(renderGraph) {
-    const g = new dagre.graphlib.Graph();
+    const g = new dagre.graphlib.Graph({ compound: true });
     g.setGraph({});
     g.setDefaultEdgeLabel(function() { return {}; });
 
-    renderGraph.nodes.forEach(n => {
-      g.setNode(n.id,    { label: n.label,  width: n.width, height: n.height });
+    traverse(renderGraph, (n) => {
+      if (! n.nodes) {
+        g.setNode(n.id, { label: n.label,  width: n.width, height: n.height });
+      } else {
+        g.setNode(n.id, { label: n.label });
+      }
+      if (n.parent) {
+        g.setParent(n.id, n.parent);
+      }
     });
 
     renderGraph.edges.forEach(e => {
       g.setEdge(e.source, e.target);
     });
-    dagre.layout(g);
 
-    renderGraph.nodes.forEach(n => {
-      const node = g.node(n.id);
-      n.x = node.x;
-      n.y = node.y;
+    dagre.layout(g);
+    g.nodes().forEach(n => {
+      const node = g.node(n);
+      node.x -= node.width * 0.5;
+      node.y -= node.height * 0.5;
     });
+
+    traverse(renderGraph, (n) => {
+      const node = g.node(n.id);
+      if (n.parent) {
+        n.x = node.x - g.node(n.parent).x;
+        n.y = node.y - g.node(n.parent).y;
+      } else {
+        n.x = node.x;
+        n.y = node.y;
+      }
+      n.width = node.width;
+      n.height = node.height;
+    });
+
     renderGraph.edges.forEach(e => {
       const edge = g.edge(e.source, e.target);
       e.points = edge.points;
     });
 
-    renderGraph.width = 350;
-    renderGraph.height = 350;
+    renderGraph.width = 500;
+    renderGraph.height = 500;
     return renderGraph;
   }
 }
@@ -142,14 +153,28 @@ const graph = {
   nodes: [
     { id: 'Node A', label: 'Node A' },
     { id: 'Node B', label: 'Node B' },
-    { id: 'Node C', label: 'Node C' }
+    { id: 'L1', label: 'L1',
+      nodes: [
+        { id: 'Sub 1', label: 'Sub 1' },
+        { id: 'L2', label: 'L2',
+          nodes: [
+            { id: 'L3', label: 'L3',
+              nodes: [
+                { id: 'L4', label: 'L4' }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   ],
   edges: [
-    { id: 'Edge 1', source: 'Node A', target: 'Node B' }
+    { id: 'Edge 1', source: 'Node A', target: 'Node B' },
+    { id: 'Edge 2', source: 'Sub 1', target: 'Node B' },
+    { id: 'Edge 3', source: 'L4', target: 'Node A' },
+    { id: 'Edge 4', source: 'L4', target: 'L4' }
   ]
 };
-
-
 
 const renderer = new TestRenderer({
   el: document.getElementById('test'),
