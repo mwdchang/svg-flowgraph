@@ -641,7 +641,7 @@ export default class SVGRenderer {
         return childrenNodeIds.includes(edge.source) && childrenNodeIds.includes(edge.target);
       });
       if (!_.isEmpty(hidden)) {
-        hiddenEdges[node.id] = hidden;
+        hiddenEdges[nodeId] = hidden;
       }
 
       for (let i = 0; i < node.edges.length; i++) {
@@ -687,8 +687,8 @@ export default class SVGRenderer {
       if ({}.hasOwnProperty.call(hiddenEdges, n.id)) {
         // console.log('restoring for', n.id, n.collapsed);
         if (n.collapsed === false) {
-          n.edges = n.edges.concat(hiddenEdges[n.id]);
-          delete hiddenEdges[n.id];
+          this.layout.edges = this.layout.edges.concat(hiddenEdges[nodeId]);
+          delete hiddenEdges[nodeId];
         }
       }
     });
