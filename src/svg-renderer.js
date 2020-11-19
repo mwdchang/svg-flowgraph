@@ -2,7 +2,7 @@ import _ from 'lodash';
 import * as d3 from 'd3';
 
 import svgUtil from './utils/svg-util';
-import GraphRenderer from './base';
+import { GRAPH_EVENTS } from './graph-events';
 import { flatten, traverse, removeChildren } from './utils';
 
 const pathFn = svgUtil.pathFn.curve(d3.curveBasis);
@@ -66,7 +66,7 @@ const ensureViewportSize = (v, chartSize) => {
  * provided as a part of the configuration object. Moreover it expect the adapter to expose a
  * "run()" and "makeRenderingGraph()" methods.
  */
-export default class SVGRenderer extends GraphRenderer {
+export default class SVGRenderer {
   /**
    * Create Elk graph renderer
    *
@@ -83,7 +83,8 @@ export default class SVGRenderer extends GraphRenderer {
    * @param {boolean} options.useDebugger - prints debugging information
    */
   constructor(options) {
-    super();
+    this.data = {};
+    this.registry = {};
     this.options = options || {};
     this.options.renderMode = this.options.renderMode || 'basic';
     this.options.useEdgeControl = this.options.useEdgeControl || false;
@@ -116,6 +117,18 @@ export default class SVGRenderer extends GraphRenderer {
     this.hiddenEdges = {};
   }
 
+  setCallback(name, fn) {
+    if (GRAPH_EVENTS.indexOf(name) === -1) {
+      throw new Error(`Failed to register callback, unknown name ${name}`);
+    } else {
+      this.registry[name] = fn;
+    }
+  }
+
+  unsetCallback(name) {
+    delete this.registry[name];
+  }
+
   /**
    * Initialize the renderer with given container element
    * @param {HTMLElement} element - container element
@@ -135,7 +148,7 @@ export default class SVGRenderer extends GraphRenderer {
    * @param {Object} data - a graph model data
    */
   setData(data) {
-    super.setData(data);
+    this.data = data;
     this.layout = null; // clear previous layout since it needs to be updated
   }
 

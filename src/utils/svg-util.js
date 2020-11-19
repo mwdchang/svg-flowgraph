@@ -36,16 +36,6 @@ export const pathFn = d3.line()
   .x(d => d.x)
   .y(d => d.y);
 
-/**
- * Add style attributes to given d3 selection
- * @param {Object} selection - d3 selection
- * @param {Object} style - A style object
- */
-export const style = (selection, style = {}) => {
-  for (const [key, value] of Object.entries(style)) {
-    selection.style(key, value);
-  }
-};
 
 // Pre-canned path/glyphs, we assume all paths are bounded by a 10x10 grid and centered at (0, 0)
 // - Arrows point left-to-right
