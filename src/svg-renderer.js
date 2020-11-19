@@ -9,7 +9,6 @@ const pathFn = svgUtil.pathFn.curve(d3.curveBasis);
 
 // FIXME: This to move out
 // - moveTo => parent.depth
-// - general => edge.data.source / edge.data.target
 
 /**
  * Just make sure the viewport has a min size so it does not look
@@ -235,8 +234,8 @@ export default class SVGRenderer {
       .append('marker')
       .classed('edge-marker-end', true)
       .attr('id', d => {
-        const source = d.data.source.replace(/\s/g, '');
-        const target = d.data.target.replace(/\s/g, '');
+        const source = d.source.replace(/\s/g, '');
+        const target = d.target.replace(/\s/g, '');
         return `arrowhead-${source}-${target}`;
       })
       .attr('viewBox', svgUtil.MARKER_VIEWBOX)
@@ -539,7 +538,9 @@ export default class SVGRenderer {
     const hNodes = chart.selectAll('.node').filter(d => { return nodes.includes(d.id); });
     hNodes.style('filter', `url(#${highlightId})`).classed(`${highlightId}`, true);
 
-    const hEdges = chart.selectAll('.edge').filter(d => { return _.some(edges, edge => edge.source === d.data.source && edge.target === d.data.target); });
+    const hEdges = chart.selectAll('.edge').filter(d => {
+      return _.some(edges, edge => edge.source === d.source && edge.target === d.target);
+    });
     hEdges.style('filter', `url(#${highlightId})`).classed(`${highlightId}`, true);
 
     svg.select(`#${highlightId}`).select('feGaussianBlur')
@@ -1100,19 +1101,19 @@ export default class SVGRenderer {
       if ({}.hasOwnProperty.call(checked, id)) return;
       checked[id] = 1;
 
-      const edges = data.edges.filter(edge => edge.data.target === id);
+      const edges = data.edges.filter(edge => edge.target === id);
       edges.forEach(edge => {
         tracedEdges.push(edge);
-        backtrack(edge.data.source);
+        backtrack(edge.source);
       });
     }
     backtrack(nodeId, [nodeId]);
 
     return {
       edges: tracedEdges.map(edge => {
-        return { source: edge.data.source, target: edge.data.target };
+        return { source: edge.source, target: edge.target };
       }),
-      nodes: _.uniq([...tracedEdges.map(e => e.data.source), ...tracedEdges.map(e => e.data.target)])
+      nodes: _.uniq([...tracedEdges.map(e => e.source), ...tracedEdges.map(e => e.target)])
     };
   }
 }
