@@ -7,6 +7,10 @@ import { flatten, traverse, removeChildren } from './utils';
 
 const pathFn = svgUtil.pathFn.curve(d3.curveBasis);
 
+// FIXME: This to move out
+// - moveTo => parent.depth
+// - general => edge.data.source / edge.data.target
+
 /**
  * Just make sure the viewport has a min size so it does not look
  * super large if there are only a few elements
@@ -91,6 +95,14 @@ export default class SVGRenderer {
     this.options.edgeControlOffsetType = this.options.edgeControlOffsetType || 'percentage';
     this.options.edgeControlOffset = this.options.edgeControlOffset || 0.66;
     this.options.useDebugger = this.options.useDebugger || false;
+    this.options.addons = this.options.addons || [];
+
+    // Primitive add-on system
+    this.options.addons.forEach(addon => {
+      addon(this).forEach(d => {
+        this[d.name] = d.fn;
+      });
+    });
 
     this.adapter = this.options.adapter;
 
@@ -111,6 +123,7 @@ export default class SVGRenderer {
 
     // Internal trackers
     this.zoom = null;
+
 
     // Refernece tracker, key nodes' identifiers. This essentially tracks the before-collapse state
     this.collapseTracker = {};
@@ -742,6 +755,7 @@ export default class SVGRenderer {
    * @param {string} groupName
    * @param {array} nodeIds - node identifiers
    */
+  /*
   async group(groupName, nodeIds) {
     const chart = this.chart;
 
@@ -780,11 +794,13 @@ export default class SVGRenderer {
     this.layout = await this.adapter.run(this.layout);
     this.render();
   }
+  */
 
   /**
    * Ungroup
    * @param {string} groupName
    */
+  /*
   async ungroup(groupName) {
     const chart = this.chart;
     const groupData = chart.selectAll('.node').filter(d => d.id === groupName).data()[0];
@@ -804,6 +820,7 @@ export default class SVGRenderer {
     this.layout = await this.adapter.run(this.layout);
     this.render();
   }
+  */
 
 
   // See https://github.com/d3/d3-zoom#zoomTransform

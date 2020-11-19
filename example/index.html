@@ -16,6 +16,7 @@
 
 const pathFn = d3.line() .x(d => d.x) .y(d => d.y);
 
+
 class TestRenderer extends myLibrary.SVGRenderer {
   renderNode(nodeSelection) {
     nodeSelection.each(function() {
@@ -88,7 +89,7 @@ class DagreAdapter {
         node.width = this.nodeWidth;
         node.height = this.nodeHeight;
       }
-      if (parent) node.parent = parent.id;
+      if (parent) node.parent = parent;
       node.data = node;
     });
 
@@ -110,7 +111,7 @@ class DagreAdapter {
         g.setNode(n.id, { label: n.label });
       }
       if (n.parent) {
-        g.setParent(n.id, n.parent);
+        g.setParent(n.id, n.parent.id);
       }
     });
 
@@ -127,9 +128,9 @@ class DagreAdapter {
 
     traverse(renderGraph, (n) => {
       const node = g.node(n.id);
-      if (n.parent) {
-        n.x = node.x - g.node(n.parent).x;
-        n.y = node.y - g.node(n.parent).y;
+      if (n.parent && n.parent.id) {
+        n.x = node.x - g.node(n.parent.id).x;
+        n.y = node.y - g.node(n.parent.id).y;
       } else {
         n.x = node.x;
         n.y = node.y;
@@ -176,12 +177,15 @@ const graph = {
   ]
 };
 
+const group = myLibrary.group;
+
 const renderer = new TestRenderer({
   el: document.getElementById('test'),
   adapter: new DagreAdapter({ nodeWidth: 100, nodeHeight: 50 }),
   renderMode: 'basic',
   useDebugger: false,
-  useEdgeControl: false
+  useEdgeControl: false,
+  addons: [ group ]
 });
 
 renderer.setData(graph);
