@@ -178,6 +178,9 @@ const graph = {
 };
 
 const group = myLibrary.group;
+const nodeSize = myLibrary.nodeSize;
+const nodeDrag = myLibrary.nodeDrag;
+const highlight = myLibrary.highlight;
 
 const renderer = new TestRenderer({
   el: document.getElementById('test'),
@@ -185,10 +188,13 @@ const renderer = new TestRenderer({
   renderMode: 'basic',
   useDebugger: false,
   useEdgeControl: false,
-  addons: [ group ]
+  addons: [ group, nodeSize, highlight, nodeDrag ]
 });
 
 renderer.setData(graph);
-renderer.render();
+renderer.render().then(() => {
+  renderer.enableDrag();
+});
+window.renderer = renderer;
 </script>
 </html>

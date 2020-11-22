@@ -56,9 +56,7 @@ const ensureViewportSize = (v, chartSize) => {
  *
  * 2. Provides utility functions to navigate and to manipulate the graph object.
  * - Center on a given node with respect to the container
- * - Highlight a set of nodes/edges
  * - Collapse and expand compound nodes
- * - Focus/enlarge leaf nodes
  * - De-clutter/cull-out edges whose source/targets are not in the viewport
  *
  * The input specification consist of two things
@@ -211,7 +209,7 @@ export default class SVGRenderer {
       this.renderEdgeControls();
     }
 
-    this._enableDrag();
+    // this._enableDrag();
     if (options.useDebugger) {
       this.renderDebug();
     }
@@ -281,7 +279,6 @@ export default class SVGRenderer {
     chart.selectAll('.edge').filter(d => d.state === 'updated').each(function(d) {
       d3.select(this).selectAll('.edge-path').datum(d);
     });
-
 
     chart.selectAll('.edge').filter(d => d.state === 'new').call(this.renderEdgeAdded);
     chart.selectAll('.edge').filter(d => d.state === 'updated').call(this.renderEdgeUpdated);
@@ -475,93 +472,6 @@ export default class SVGRenderer {
 
 
   /**
-   * Highlight a subgraph with gaussian blur
-   *
-   * @param {object} options - highlight options
-   * @param {string} options.color - highlight color
-   * @param {number} options.duration - highlight duration
-   */
-  highlight({ nodes, edges }, options) {
-    const svg = d3.select(this.svgEl);
-    const chart = this.chart;
-
-    const color = options.color || 'red';
-    const duration = options.duration || 2000;
-
-    const highlightId = `glow${(new Date()).getTime()}`;
-
-    // Reset
-    // svg.select('#glow').remove();
-
-    // Add temporary filter definition
-    const filter = svg.select('defs')
-      .append('filter')
-      .attr('id', highlightId)
-      .attr('width', '200%')
-      .attr('filterUnits', 'userSpaceOnUse');
-
-    filter.append('feGaussianBlur')
-      .attr('stdDeviation', 4.5)
-      .attr('result', 'blur');
-
-    filter.append('feOffset')
-      .attr('in', 'blur')
-      .attr('result', 'offsetBlur')
-      .attr('dx', 0)
-      .attr('dy', 0)
-      .attr('x', -10)
-      .attr('y', -10);
-
-    filter.append('feFlood')
-      .attr('in', 'offsetBlur')
-      .attr('flood-color', color)
-      .attr('flood-opacity', 0.95)
-      .attr('result', 'offsetColor');
-
-    filter.append('feComposite')
-      .attr('in', 'offsetColor')
-      .attr('in2', 'offsetBlur')
-      .attr('operator', 'in')
-      .attr('result', 'offsetBlur');
-
-
-    const feMerge = filter.append('feMerge');
-    feMerge.append('feMergeNode')
-      .attr('in', 'offsetBlur');
-
-    feMerge.append('feMergeNode')
-      .attr('in', 'SourceGraphic');
-
-
-    // Apply filter
-    // FIXME: not very efficient
-    const hNodes = chart.selectAll('.node').filter(d => { return nodes.includes(d.id); });
-    hNodes.style('filter', `url(#${highlightId})`).classed(`${highlightId}`, true);
-
-    const hEdges = chart.selectAll('.edge').filter(d => {
-      return _.some(edges, edge => edge.source === d.source && edge.target === d.target);
-    });
-    hEdges.style('filter', `url(#${highlightId})`).classed(`${highlightId}`, true);
-
-    svg.select(`#${highlightId}`).select('feGaussianBlur')
-      .transition()
-      .duration(duration)
-      .attr('stdDeviation', 0)
-      .on('end', () => {
-        hNodes.style('filter', null);
-        hEdges.style('filter', null);
-      });
-
-    return highlightId;
-  }
-
-  unHighlight(id) {
-    const svg = d3.select(this.svgEl);
-    svg.select(`#${id}`).remove();
-    svg.selectAll(`.${id}`).style('filter', null);
-  }
-
-  /**
    * Centralize provided node in the SVG canvas
    *
    * @param {string} nodeId - id
@@ -710,119 +620,6 @@ export default class SVGRenderer {
     this.layout = await this.adapter.run(this.layout);
     this.render();
   }
-
-
-  /**
-   * Enlarge node
-   *
-   * @param {string} nodeId
-   */
-  async focus(nodeId) {
-    const prev = this.chart.selectAll('.node').filter(d => d.focused === true);
-    if (prev.size() === 1) {
-      const datum = prev.datum();
-      delete datum.width;
-      delete datum.height;
-      delete datum.focused;
-    }
-
-    const node = this.chart.selectAll('.node').filter(d => d.id === nodeId);
-
-    // Don't enlarge compound nodes
-    if (node.nodes && node.nodes.length > 0) return;
-
-    node.datum().width = 400;
-    node.datum().height = 300;
-    node.datum().focused = true;
-
-    this.layout = await this.adapter.run(this.layout);
-    this.render();
-  }
-
-  async unfocus(nodeId) {
-    const node = this.chart.selectAll('.node').filter(d => d.id === nodeId);
-    const datum = node.datum();
-    delete datum.width;
-    delete datum.height;
-    delete datum.focused;
-    this.layout = await this.adapter.run(this.layout);
-    this.render();
-  }
-
-
-  /**
-   * Group nodes, must be at the same level (all nodes must share the same parent)
-   *
-   * @param {string} groupName
-   * @param {array} nodeIds - node identifiers
-   */
-  /*
-  async group(groupName, nodeIds) {
-    const chart = this.chart;
-
-    // 0) check parent
-    const nodesData = chart.selectAll('.node').filter(d => nodeIds.includes(d.id)).data();
-    if (_.uniq(nodesData.map(d => d.parent.id)).length !== 1) {
-      console.log('Cannot group across different levels');
-      return;
-    }
-
-    const groupNode = {
-      id: groupName,
-      label: groupName,
-      concept: groupName,
-      depth: nodesData[0].depth,
-      type: 'custom',
-      parent: nodesData[0].parent,
-      nodes: [],
-      data: { label: groupName }
-    };
-
-    // 1) Move nodes to new group
-    const parentData = nodesData[0].parent;
-    nodeIds.forEach(nodeId => {
-      const temp = _.remove(parentData.nodes, node => node.id === nodeId)[0];
-
-      // Need to create a new node wrapper to avoid double pointers problem
-      const newNode = { ...temp };
-      newNode.parent = groupNode;
-      groupNode.nodes.push(newNode);
-    });
-
-    // 2) Add new gruop node
-    parentData.nodes.push(groupNode);
-
-    this.layout = await this.adapter.run(this.layout);
-    this.render();
-  }
-  */
-
-  /**
-   * Ungroup
-   * @param {string} groupName
-   */
-  /*
-  async ungroup(groupName) {
-    const chart = this.chart;
-    const groupData = chart.selectAll('.node').filter(d => d.id === groupName).data()[0];
-    const parentData = groupData.parent;
-
-    // 0) Remove group
-    _.remove(parentData.nodes, n => n.id === groupName);
-
-    // 1) Add group children back into group parent
-    groupData.nodes.forEach(node => {
-      const temp = { ...node };
-      temp.parent = parentData;
-      parentData.nodes.push(temp);
-    });
-    delete groupData.nodes;
-
-    this.layout = await this.adapter.run(this.layout);
-    this.render();
-  }
-  */
-
 
   // See https://github.com/d3/d3-zoom#zoomTransform
   boundary() {
@@ -1000,91 +797,21 @@ export default class SVGRenderer {
     });
   }
 
-  /**
-   * Enable node dragging, this will recalculate edge end points as well
-   */
-  _enableDrag() {
+  updateEdgePoints() {
     const chart = this.chart;
     const options = this.options;
-    const data = flatten(this.layout);
-    const nodes = chart.selectAll('.node');
     const self = this;
-
-    function updateEdges() {
-      chart.selectAll('.edge').selectAll('path').attr('d', d => {
-        return pathFn(d.points);
+    chart.selectAll('.edge').selectAll('path').attr('d', d => {
+      return pathFn(d.points);
+    });
+    if (options.useEdgeControl) {
+      chart.selectAll('.edge').each(function() {
+        const pathNode = d3.select(this).select('path').node();
+        const controlPoint = self.calculateEdgeControlPlacement(pathNode);
+        d3.select(this).select('.edge-control')
+          .attr('transform', svgUtil.translate(controlPoint.x, controlPoint.y));
       });
-      if (options.useEdgeControl) {
-        chart.selectAll('.edge').each(function() {
-          const pathNode = d3.select(this).select('path').node();
-          const controlPoint = self.calculateEdgeControlPlacement(pathNode);
-          d3.select(this).select('.edge-control')
-            .attr('transform', svgUtil.translate(controlPoint.x, controlPoint.y));
-        });
-      }
     }
-
-    function dragStart() {
-      d3.event.sourceEvent.stopPropagation();
-    }
-
-    function dragMove() {
-      const node = d3.select(this);
-      const draggedIds = [node.datum().id, ...node.selectAll('.node').data().map(d => d.id)];
-
-      // Check if there is a parent container
-      const parentData = d3.select(this.parentNode).datum();
-
-      // Adjust node
-      const dx = d3.event.dx;
-      const dy = d3.event.dy;
-
-      // Short circuit
-      if (parentData) {
-        if (node.datum().x + node.datum().width + dx > (parentData.width) || node.datum().x + dx < 0) {
-          return;
-        }
-        if (node.datum().y + node.datum().height + dy > (parentData.height) || node.datum().y + dy < 0) {
-          return;
-        }
-      }
-
-      node.datum().x += dx;
-      node.datum().y += dy;
-      node.attr('transform', svgUtil.translate(node.datum().x, node.datum().y));
-      // Adjust edge
-      data.edges.forEach(edge => {
-        const source = edge.source;
-        const target = edge.target;
-
-        // FIXME: ids might not work once the graph is actually database driven.
-        if (draggedIds.includes(source) && draggedIds.includes(target)) {
-          edge.points.forEach(p => {
-            p.x += dx;
-            p.y += dy;
-          });
-        } else if (draggedIds.includes(source)) {
-          edge.points[0].x += dx;
-          edge.points[0].y += dy;
-        } else if (draggedIds.includes(target)) {
-          edge.points[edge.points.length - 1].x += dx;
-          edge.points[edge.points.length - 1].y += dy;
-        }
-      });
-
-      // update edges based on new source/target coords
-      updateEdges();
-    }
-
-    function dragEnd() {
-    }
-
-    // FIXME: Need to disable current listeners first before assigning new ones?
-    const nodeDrag = d3.drag()
-      .on('start', dragStart)
-      .on('end', dragEnd)
-      .on('drag', dragMove);
-    nodes.call(nodeDrag);
   }
 
   /**
@@ -1092,14 +819,14 @@ export default class SVGRenderer {
    *
    * @param {string} id - node identifier
    */
-  _trace(nodeId) {
-    const checked = {};
+  trace(nodeId) {
+    const checked = new Map();
     const data = this.layout || { edges: [] };
     const tracedEdges = [];
 
     function backtrack(id) {
-      if ({}.hasOwnProperty.call(checked, id)) return;
-      checked[id] = 1;
+      if (checked.has(id)) return;
+      checked.set(id, 1);
 
       const edges = data.edges.filter(edge => edge.target === id);
       edges.forEach(edge => {
