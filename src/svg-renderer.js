@@ -56,7 +56,6 @@ const ensureViewportSize = (v, chartSize) => {
  *
  * 2. Provides utility functions to navigate and to manipulate the graph object.
  * - Center on a given node with respect to the container
- * - Collapse and expand compound nodes
  * - De-clutter/cull-out edges whose source/targets are not in the viewport
  *
  * The input specification consist of two things
@@ -120,11 +119,6 @@ export default class SVGRenderer {
 
     // Internal trackers
     this.zoom = null;
-
-
-    // Refernece tracker, key nodes' identifiers. This essentially tracks the before-collapse state
-    this.collapseTracker = {};
-    this.hiddenEdges = {};
   }
 
   setCallback(name, fn) {
@@ -512,112 +506,6 @@ export default class SVGRenderer {
         -dy + (0.5 * height) / t.k
       )
     );
-  }
-
-  /**
-   * Collapse node and all children nodes.
-   * Note edges whose source and/or target are within the collapsed node are assigned
-   * to the node.
-   *
-   * @param {string} nodeId - node identifier
-   */
-  async collapse(nodeId) {
-    // 1) Grab all nodes
-    const node = this.chart.selectAll('.node').filter(d => d.id === nodeId);
-    const childrenNodeIds = node.selectAll('.node').data().map(d => d.id);
-    const collapseTracker = this.collapseTracker;
-    const hiddenEdges = this.hiddenEdges;
-    collapseTracker[nodeId] = {};
-    collapseTracker[nodeId].edgeMap = {};
-
-    if (childrenNodeIds.length === 0) return; // Don't collapse if already a leaf node
-
-    traverse(this.layout, (node) => {
-      if (node.id === nodeId) {
-        node.width = 40;
-        node.height = 40;
-        collapseTracker[nodeId].nodes = node.nodes;
-
-        // FIXME: This is buggy, if the edges are specified 2 levels or lower it will remove them.
-        // So this means we need to either
-        // - Specify all edges at the top level, or
-        // - Shift the edges to be co-loated with one of their "new parent"
-        node.nodes = [];
-        node.collapsed = true;
-      }
-      if (!node.edges) return;
-
-      const hidden = _.remove(node.edges, edge => {
-        return childrenNodeIds.includes(edge.source) && childrenNodeIds.includes(edge.target);
-      });
-      if (!_.isEmpty(hidden)) {
-        hiddenEdges[nodeId] = hidden;
-      }
-
-      for (let i = 0; i < node.edges.length; i++) {
-        const edge = node.edges[i];
-        const source = edge.source;
-        const target = edge.target;
-
-        const originalEdge = {};
-        if (childrenNodeIds.includes(source)) {
-          originalEdge.source = edge.source;
-          edge.source = nodeId;
-        }
-        if (childrenNodeIds.includes(target)) {
-          originalEdge.target = edge.target;
-          edge.target = nodeId;
-        }
-
-        if (!_.isEmpty(originalEdge)) {
-          collapseTracker[nodeId].edgeMap[edge.id] = originalEdge;
-        }
-      }
-    });
-    this.layout = await this.adapter.run(this.layout);
-    this.render();
-  }
-
-  /**
-   * Expand a collapsed node, and restore the original states
-   *
-   * @param {string} nodeId - node identifier
-   */
-  async expand(nodeId) {
-    const node = this.chart.selectAll('.node').filter(d => d.id === nodeId);
-    const collapseTracker = this.collapseTracker;
-    const hiddenEdges = this.hiddenEdges;
-    const entry = collapseTracker[nodeId];
-
-    node.datum().nodes = entry.nodes;
-    node.datum().collapsed = false;
-
-    // Restore hidden edges
-    traverse(node.datum(), (n) => {
-      if ({}.hasOwnProperty.call(hiddenEdges, n.id)) {
-        // console.log('restoring for', n.id, n.collapsed);
-        if (n.collapsed === false) {
-          this.layout.edges = this.layout.edges.concat(hiddenEdges[nodeId]);
-          delete hiddenEdges[nodeId];
-        }
-      }
-    });
-
-    // Revert adjusted edges
-    traverse(this.layout, (node) => {
-      if (!node.edges) return;
-      for (let i = 0; i < node.edges.length; i++) {
-        const edge = node.edges[i];
-        if (entry.edgeMap[edge.id]) {
-          edge.target = entry.edgeMap[edge.id].target || edge.target;
-          edge.source = entry.edgeMap[edge.id].source || edge.source;
-        }
-      }
-    });
-    delete collapseTracker[nodeId];
-
-    this.layout = await this.adapter.run(this.layout);
-    this.render();
   }
 
   // See https://github.com/d3/d3-zoom#zoomTransform
