@@ -8,7 +8,6 @@ const nodeDrag = (G) => {
    */
   const enableDrag = () => {
     const chart = G.chart;
-    console.log('!!! G', G.layout);
     const data = flatten(G.layout);
 
     function dragStart() {

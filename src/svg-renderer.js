@@ -209,7 +209,6 @@ export default class SVGRenderer {
       this.renderEdgeControls();
     }
 
-    // this._enableDrag();
     if (options.useDebugger) {
       this.renderDebug();
     }
