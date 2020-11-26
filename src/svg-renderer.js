@@ -56,7 +56,6 @@ const ensureViewportSize = (v, chartSize) => {
  *
  * 2. Provides utility functions to navigate and to manipulate the graph object.
  * - Center on a given node with respect to the container
- * - De-clutter/cull-out edges whose source/targets are not in the viewport
  *
  * The input specification consist of two things
  * - Graph data specified as a set of nodes and edges
@@ -84,7 +83,7 @@ export default class SVGRenderer {
    */
   constructor(options) {
     this.data = {};
-    this.registry = {};
+    this.registry = new Map();
     this.options = options || {};
     this.options.renderMode = this.options.renderMode || 'basic';
     this.options.useEdgeControl = this.options.useEdgeControl || false;
@@ -102,7 +101,6 @@ export default class SVGRenderer {
 
     this.adapter = this.options.adapter;
 
-    this.parentEl = null;
     this.svgEl = null;
 
     this.chart = null; // D3 chart reference
@@ -125,12 +123,12 @@ export default class SVGRenderer {
     if (GRAPH_EVENTS.indexOf(name) === -1) {
       throw new Error(`Failed to register callback, unknown name ${name}`);
     } else {
-      this.registry[name] = fn;
+      this.registry.set(name, fn);
     }
   }
 
   unsetCallback(name) {
-    delete this.registry[name];
+    this.registry.delete(name);
   }
 
   /**
@@ -138,12 +136,11 @@ export default class SVGRenderer {
    * @param {HTMLElement} element - container element
    */
   initialize(element) {
-    this.parentEl = element;
-    this.chartSize.width = this.parentEl.clientWidth;
-    this.chartSize.height = this.parentEl.clientHeight;
+    this.chartSize.width = element.clientWidth;
+    this.chartSize.height = element.clientHeight;
 
     this.svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    removeChildren(this.parentEl).appendChild(this.svgEl);
+    removeChildren(element).appendChild(this.svgEl);
     this.svgEl.style.userSelect = 'none';
   }
 
@@ -463,7 +460,6 @@ export default class SVGRenderer {
     return layout;
   }
 
-
   /**
    * Centralize provided node in the SVG canvas
    *
@@ -507,43 +503,6 @@ export default class SVGRenderer {
       )
     );
   }
-
-  // See https://github.com/d3/d3-zoom#zoomTransform
-  boundary() {
-    const chart = this.chart;
-    const t = d3.zoomTransform(chart.node());
-    const x1 = (0 - t.x) / t.k;
-    const y1 = (0 - t.y) / t.k;
-    const x2 = (this.layout.width - t.x) / t.k;
-    const y2 = (this.layout.height - t.y) / t.k;
-
-    // const x1 = 0 * t.k + t.x;
-    // const y1 = 0 * t.k + t.y;
-    // const x2 = this.layout.width * t.k + t.x;
-    // const y2 = this.layout.height * t.k + t.y;
-    return { x1, y1, x2, y2 };
-  }
-
-
-  cullEdges() {
-    const { x1, y1, x2, y2 } = this.boundary();
-
-    // Temporarily hide edges
-    this.chart.selectAll('.edge').each(function(d) {
-      const source = _.first(d.points);
-      const target = _.last(d.points);
-
-      if ((source.x < x1 || source.x > x2 || source.y < y1 || source.y > y2) &&
-          (target.x < x1 || target.x > x2 || target.y < y1 || target.y > y2)) {
-        d3.select(this).style('opacity', 0);
-      }
-    });
-  }
-
-  uncullEdges() {
-    d3.selectAll('.edge').style('opacity', 1);
-  }
-
 
   /**
    * Prepare the SVG and returns a chart refrence. This function will create three "layers": background,
@@ -600,18 +559,13 @@ export default class SVGRenderer {
     const svg = d3.select(this.svgEl);
     const nodes = chart.selectAll('.node');
     const edges = chart.selectAll('.edge');
-
     self.clickTimer = null;
-
-    const registered = (eventName) => {
-      return ({}.hasOwnProperty.call(registry, eventName));
-    };
 
     svg.on('click', function () {
       d3.event.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.mouse(this));
-      if (registered('backgroundClick')) {
-        registry.backgroundClick(d3.select(this), self, {
+      if (registry.has('backgroundClick')) {
+        registry.get('backgroundClick')(d3.select(this), self, {
           x: pointerCoords[0],
           y: pointerCoords[1]
         });
@@ -621,8 +575,8 @@ export default class SVGRenderer {
     svg.on('dblclick', function () {
       d3.event.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.mouse(this));
-      if (registered('backgroundDblClick')) {
-        registry.backgroundDblClick(d3.select(this), self, {
+      if (registry.has('backgroundDblClick')) {
+        registry.get('backgroundDblClick')(d3.select(this), self, {
           x: pointerCoords[0],
           y: pointerCoords[1]
         });
@@ -631,56 +585,46 @@ export default class SVGRenderer {
 
     nodes.on('dblclick', function() {
       d3.event.stopPropagation();
-      if (registered('nodeDblClick')) {
+      if (registry.has('nodeDblClick')) {
         window.clearTimeout(self.clickTimer);
-        registry.nodeDblClick(d3.select(this), self);
+        registry.get('nodeDblClick')(d3.select(this), self);
       }
     });
 
     nodes.on('click', function() {
       d3.event.stopPropagation();
-      if (registered('nodeClick')) {
+      if (registry.has('nodeClick')) {
         const _this = this;
         window.clearTimeout(self.clickTimer);
         self.clickTimer = window.setTimeout(() => {
-          registry.nodeClick(d3.select(_this), self);
+          registry.get('nodeClick')(d3.select(_this), self);
         }, 200);
       }
     });
 
     nodes.on('mouseenter', function() {
       d3.event.stopPropagation();
-      if (registered('nodeMouseEnter')) {
-        registry.nodeMouseEnter(d3.select(this), self);
-      }
+      if (registry.has('nodeMouseEnter')) { registry.get('nodeMouseEnter')(d3.select(this), self); }
     });
 
     nodes.on('mouseleave', function() {
       d3.event.stopPropagation();
-      if (registered('nodeMouseLeave')) {
-        registry.nodeMouseLeave(d3.select(this), self);
-      }
+      if (registry.has('nodeMouseLeave')) { registry.get('nodeMouseLeave')(d3.select(this), self); }
     });
 
     edges.on('click', function() {
       d3.event.stopPropagation();
-      if (registered('edgeClick')) {
-        registry.edgeClick(d3.select(this), self);
-      }
+      if (registry.has('edgeClick')) { registry.get('edgeClick')(d3.select(this), self); }
     });
 
     edges.on('mouseenter', function() {
       d3.event.stopPropagation();
-      if (registered('edgeMouseEnter')) {
-        registry.edgeMouseEnter(d3.select(this), self);
-      }
+      if (registry.has('edgeMouseEnter')) { registry.get('edgeMouseEnter')(d3.select(this), self); }
     });
 
     edges.on('mouseleave', function() {
       d3.event.stopPropagation();
-      if (registered('edgeMouseLeave')) {
-        registry.edgeMouseLeave(d3.select(this), self);
-      }
+      if (registry.has('edgeMouseLeave')) { registry.get('edgeMouseLeave')(d3.select(this), self); }
     });
   }
 
