@@ -63,8 +63,6 @@ const expandCollapse = (G) => {
         }
       }
     });
-    G.layout = await G.adapter.run(G.layout);
-    console.log(G.layout);
     G.render();
   };
 
@@ -103,8 +101,6 @@ const expandCollapse = (G) => {
       }
     });
     collapseTracker.delete(nodeId);
-
-    G.layout = await G.adapter.run(G.layout);
     G.render();
   };
 

@@ -22,7 +22,6 @@ const nodeSize = (G) => {
     node.datum().height = h;
     node.datum().focused = true;
 
-    G.layout = await G.adapter.run(G.layout);
     G.render();
   };
 
@@ -32,7 +31,6 @@ const nodeSize = (G) => {
     delete datum.width;
     delete datum.height;
     delete datum.focused;
-    G.layout = await G.adapter.run(G.layout);
     G.render();
   };
 

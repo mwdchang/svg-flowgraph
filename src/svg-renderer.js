@@ -82,7 +82,6 @@ export default class SVGRenderer {
    * @param {boolean} options.useDebugger - prints debugging information
    */
   constructor(options) {
-    this.data = {};
     this.registry = new Map();
     this.options = options || {};
     this.options.renderMode = this.options.renderMode || 'basic';
@@ -149,8 +148,7 @@ export default class SVGRenderer {
    * @param {Object} data - a graph model data
    */
   setData(data) {
-    this.data = data;
-    this.layout = null; // clear previous layout since it needs to be updated
+    this.layout = this.adapter.makeRenderingGraph(data);
   }
 
 
@@ -160,8 +158,9 @@ export default class SVGRenderer {
   async render() {
     const options = this.options;
     if (!this.layout) {
-      this.layout = await this.runLayout();
+      throw new Error('Layout data not set');
     }
+    this.layout = await this.adapter.run(this.layout);
 
     // Addresses the case where swapping layout introduce sufficient changes that
     // we need to recalculate the viewport dimensions
@@ -452,12 +451,6 @@ export default class SVGRenderer {
       .style('stroke', '#00F')
       .style('stroke-width', 1.5)
       .style('opacity', 0.5);
-  }
-
-  async runLayout() {
-    const renderingGraph = this.adapter.makeRenderingGraph(this.data);
-    const layout = this.adapter.run(renderingGraph);
-    return layout;
   }
 
   /**
