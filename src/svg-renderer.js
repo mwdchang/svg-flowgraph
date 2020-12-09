@@ -554,7 +554,7 @@ export default class SVGRenderer {
 
     svg.on('click', function (evt) {
       evt.stopPropagation();
-      const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.mouse(this));
+      const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.pointer(evt));
       if (registry.has('backgroundClick')) {
         registry.get('backgroundClick')(d3.select(this), self, {
           x: pointerCoords[0],
@@ -565,7 +565,7 @@ export default class SVGRenderer {
 
     svg.on('dblclick', function (evt) {
       evt.stopPropagation();
-      const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.mouse(this));
+      const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.pointer(evt));
       if (registry.has('backgroundDblClick')) {
         registry.get('backgroundDblClick')(d3.select(this), self, {
           x: pointerCoords[0],
