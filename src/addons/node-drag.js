@@ -10,11 +10,11 @@ const nodeDrag = (G) => {
     const chart = G.chart;
     const data = flatten(G.layout);
 
-    function dragStart() {
-      d3.event.sourceEvent.stopPropagation();
+    function dragStart(evt) {
+      evt.sourceEvent.stopPropagation();
     }
 
-    function dragMove() {
+    function dragMove(evt) {
       const node = d3.select(this);
       const draggedIds = [node.datum().id, ...node.selectAll('.node').data().map(d => d.id)];
 
@@ -22,8 +22,8 @@ const nodeDrag = (G) => {
       const parentData = d3.select(this.parentNode).datum();
 
       // Adjust node
-      const dx = d3.event.dx;
-      const dy = d3.event.dy;
+      const dx = evt.dx;
+      const dy = evt.dy;
 
       // Short circuit
       if (parentData) {

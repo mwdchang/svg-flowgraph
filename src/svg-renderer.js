@@ -30,7 +30,6 @@ const ensureViewportSize = (v, chartSize) => {
 // TODO
 // - Add/Remove without relayout
 // - Edge/node look up performance
-// - Cull edges is buggy
 
 /**
  * Base support for rendering and manipulating a compound/nested graph.
@@ -150,7 +149,6 @@ export default class SVGRenderer {
   setData(data) {
     this.layout = this.adapter.makeRenderingGraph(data);
   }
-
 
   /**
    * Renders the graph
@@ -526,11 +524,11 @@ export default class SVGRenderer {
     // Add a foreground layer
     treatedSVG.append('g').classed('foreground-layer', true);
 
-    const _this = this;
-    function zoomed() {
-      chart.attr('transform', d3.event.transform);
-      if (_this.options.useDebugger) {
-        _this.renderDebug();
+    const self = this;
+    function zoomed(evt) {
+      chart.attr('transform', evt.transform);
+      if (self.options.useDebugger) {
+        self.renderDebug();
       }
     }
 
@@ -554,8 +552,8 @@ export default class SVGRenderer {
     const edges = chart.selectAll('.edge');
     self.clickTimer = null;
 
-    svg.on('click', function () {
-      d3.event.stopPropagation();
+    svg.on('click', function (evt) {
+      evt.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.mouse(this));
       if (registry.has('backgroundClick')) {
         registry.get('backgroundClick')(d3.select(this), self, {
@@ -565,8 +563,8 @@ export default class SVGRenderer {
       }
     });
 
-    svg.on('dblclick', function () {
-      d3.event.stopPropagation();
+    svg.on('dblclick', function (evt) {
+      evt.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.mouse(this));
       if (registry.has('backgroundDblClick')) {
         registry.get('backgroundDblClick')(d3.select(this), self, {
@@ -576,16 +574,16 @@ export default class SVGRenderer {
       }
     });
 
-    nodes.on('dblclick', function() {
-      d3.event.stopPropagation();
+    nodes.on('dblclick', function(evt) {
+      evt.stopPropagation();
       if (registry.has('nodeDblClick')) {
         window.clearTimeout(self.clickTimer);
         registry.get('nodeDblClick')(d3.select(this), self);
       }
     });
 
-    nodes.on('click', function() {
-      d3.event.stopPropagation();
+    nodes.on('click', function(evt) {
+      evt.stopPropagation();
       if (registry.has('nodeClick')) {
         const _this = this;
         window.clearTimeout(self.clickTimer);
@@ -595,28 +593,28 @@ export default class SVGRenderer {
       }
     });
 
-    nodes.on('mouseenter', function() {
-      d3.event.stopPropagation();
+    nodes.on('mouseenter', function(evt) {
+      evt.stopPropagation();
       if (registry.has('nodeMouseEnter')) { registry.get('nodeMouseEnter')(d3.select(this), self); }
     });
 
-    nodes.on('mouseleave', function() {
-      d3.event.stopPropagation();
+    nodes.on('mouseleave', function(evt) {
+      evt.stopPropagation();
       if (registry.has('nodeMouseLeave')) { registry.get('nodeMouseLeave')(d3.select(this), self); }
     });
 
-    edges.on('click', function() {
-      d3.event.stopPropagation();
+    edges.on('click', function(evt) {
+      evt.stopPropagation();
       if (registry.has('edgeClick')) { registry.get('edgeClick')(d3.select(this), self); }
     });
 
-    edges.on('mouseenter', function() {
-      d3.event.stopPropagation();
+    edges.on('mouseenter', function(evt) {
+      evt.stopPropagation();
       if (registry.has('edgeMouseEnter')) { registry.get('edgeMouseEnter')(d3.select(this), self); }
     });
 
-    edges.on('mouseleave', function() {
-      d3.event.stopPropagation();
+    edges.on('mouseleave', function(evt) {
+      evt.stopPropagation();
       if (registry.has('edgeMouseLeave')) { registry.get('edgeMouseLeave')(d3.select(this), self); }
     });
   }

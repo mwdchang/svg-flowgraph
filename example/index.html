@@ -3,9 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js" integrity="sha512-90vH1Z83AJY9DmlWa8WkjkV79yfS2n2Oxhsi2dZbIv0nC4E6m5AbH8Nh156kkM7JePmqD6tcZsfad1ueoaovww==" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js" integrity="sha512-L5K9Bf852XyB+wrvRFGwWzfhVI+TZqJlgwzX9yvrfhILuzIZfrcQO4au9D9eVDnkQ6oqYr9v2QwJdFo+eKE50Q==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.3.1/d3.min.js" integrity="sha512-9H86d5lhAwgf2/u29K4N5G6pZThNOojI8kMT4nT4NHvVR02cM85M06KJRQXkI0XgQWBpzQyIyr8LVomyu1AQdw==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js" integrity="sha512-psLUZfcgPmi012lcpVHkWoOqyztollwCGu4w/mXijFMK/YcdUdP06voJNVOJ7f/dUIlO2tGlDLuypRyXX2lcvQ==" crossorigin="anonymous"></script>
+
+<!--
+<script src="lodash.min.js"></script>
+<script src="d3.v5.js"></script>
+<script src="dagre.js"></script>
+-->
 <script src="./compound-graph.min.js"></script>
 <title>Demo Graph</title>
 </head>
@@ -105,7 +112,7 @@ class DagreAdapter {
     g.setDefaultEdgeLabel(function() { return {}; });
 
     traverse(renderGraph, (n) => {
-      if (! n.nodes) {
+      if (! n.nodes || n.collapsed === true) {
         g.setNode(n.id, { label: n.label,  width: n.width, height: n.height });
       } else {
         g.setNode(n.id, { label: n.label });
@@ -181,6 +188,7 @@ const group = myLibrary.group;
 const nodeSize = myLibrary.nodeSize;
 const nodeDrag = myLibrary.nodeDrag;
 const highlight = myLibrary.highlight;
+const expandCollapse = myLibrary.expandCollapse;
 
 const renderer = new TestRenderer({
   el: document.getElementById('test'),
@@ -188,7 +196,7 @@ const renderer = new TestRenderer({
   renderMode: 'basic',
   useDebugger: false,
   useEdgeControl: false,
-  addons: [ group, nodeSize, highlight, nodeDrag ]
+  addons: [ group, nodeSize, highlight, nodeDrag, expandCollapse ]
 });
 
 renderer.setData(graph);
