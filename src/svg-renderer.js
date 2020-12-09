@@ -556,7 +556,7 @@ export default class SVGRenderer {
       evt.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.pointer(evt));
       if (registry.has('backgroundClick')) {
-        registry.get('backgroundClick')(d3.select(this), self, {
+        registry.get('backgroundClick')(evt, d3.select(this), self, {
           x: pointerCoords[0],
           y: pointerCoords[1]
         });
@@ -567,7 +567,7 @@ export default class SVGRenderer {
       evt.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.pointer(evt));
       if (registry.has('backgroundDblClick')) {
-        registry.get('backgroundDblClick')(d3.select(this), self, {
+        registry.get('backgroundDblClick')(evt, d3.select(this), self, {
           x: pointerCoords[0],
           y: pointerCoords[1]
         });
@@ -578,7 +578,7 @@ export default class SVGRenderer {
       evt.stopPropagation();
       if (registry.has('nodeDblClick')) {
         window.clearTimeout(self.clickTimer);
-        registry.get('nodeDblClick')(d3.select(this), self);
+        registry.get('nodeDblClick')(evt, d3.select(this), self);
       }
     });
 
@@ -588,34 +588,34 @@ export default class SVGRenderer {
         const _this = this;
         window.clearTimeout(self.clickTimer);
         self.clickTimer = window.setTimeout(() => {
-          registry.get('nodeClick')(d3.select(_this), self);
+          registry.get('nodeClick')(evt, d3.select(_this), self);
         }, 200);
       }
     });
 
     nodes.on('mouseenter', function(evt) {
       evt.stopPropagation();
-      if (registry.has('nodeMouseEnter')) { registry.get('nodeMouseEnter')(d3.select(this), self); }
+      if (registry.has('nodeMouseEnter')) { registry.get('nodeMouseEnter')(evt, d3.select(this), self); }
     });
 
     nodes.on('mouseleave', function(evt) {
       evt.stopPropagation();
-      if (registry.has('nodeMouseLeave')) { registry.get('nodeMouseLeave')(d3.select(this), self); }
+      if (registry.has('nodeMouseLeave')) { registry.get('nodeMouseLeave')(evt, d3.select(this), self); }
     });
 
     edges.on('click', function(evt) {
       evt.stopPropagation();
-      if (registry.has('edgeClick')) { registry.get('edgeClick')(d3.select(this), self); }
+      if (registry.has('edgeClick')) { registry.get('edgeClick')(evt, d3.select(this), self); }
     });
 
     edges.on('mouseenter', function(evt) {
       evt.stopPropagation();
-      if (registry.has('edgeMouseEnter')) { registry.get('edgeMouseEnter')(d3.select(this), self); }
+      if (registry.has('edgeMouseEnter')) { registry.get('edgeMouseEnter')(evt, d3.select(this), self); }
     });
 
     edges.on('mouseleave', function(evt) {
       evt.stopPropagation();
-      if (registry.has('edgeMouseLeave')) { registry.get('edgeMouseLeave')(d3.select(this), self); }
+      if (registry.has('edgeMouseLeave')) { registry.get('edgeMouseLeave')(evt, d3.select(this), self); }
     });
   }
 
