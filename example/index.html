@@ -98,11 +98,12 @@ class DagreAdapter {
       }
       if (parent) node.parent = parent;
       node.data = node;
-    });
+    }, null);
 
     graphData.edges.forEach(e => {
       e.data = e;
     });
+    console.log('!!', graphData);
     return graphData;
   }
 
@@ -189,6 +190,7 @@ const nodeSize = myLibrary.nodeSize;
 const nodeDrag = myLibrary.nodeDrag;
 const highlight = myLibrary.highlight;
 const expandCollapse = myLibrary.expandCollapse;
+const panZoom = myLibrary.panZoom;
 
 const renderer = new TestRenderer({
   el: document.getElementById('test'),
@@ -196,7 +198,7 @@ const renderer = new TestRenderer({
   renderMode: 'basic',
   useDebugger: false,
   useEdgeControl: false,
-  addons: [ group, nodeSize, highlight, nodeDrag, expandCollapse ]
+  addons: [ group, nodeSize, highlight, nodeDrag, expandCollapse, panZoom ]
 });
 
 renderer.setData(graph);

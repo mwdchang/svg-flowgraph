@@ -8,7 +8,6 @@ import { flatten, traverse, removeChildren } from './utils';
 const pathFn = svgUtil.pathFn.curve(d3.curveBasis);
 
 // FIXME: This to move out
-// - moveTo => parent.depth
 
 /**
  * Just make sure the viewport has a min size so it does not look
@@ -451,49 +450,6 @@ export default class SVGRenderer {
       .style('opacity', 0.5);
   }
 
-  /**
-   * Centralize provided node in the SVG canvas
-   *
-   * @param {string} nodeId - id
-   * @param {number} duration - animation transition time in millis
-   *
-   * See: https://observablehq.com/@d3/programmatic-zoom
-   */
-  moveTo(nodeId, duration) {
-    const chart = this.chart;
-    const chartSize = this.chartSize;
-    const svg = d3.select(this.svgEl);
-    const width = this.layout.width < chartSize.width ? chartSize.width : this.layout.width;
-    const height = this.layout.height < chartSize.height ? chartSize.height : this.layout.height;
-
-    // t.k = scale, t.x = translateX, t.y = translateY
-    const t = d3.zoomTransform(chart.node());
-
-    const node = flatten(this.layout).nodes.find(n => n.id === nodeId);
-    if (_.isNil(node)) return;
-
-    let globalX = node.x;
-    let globalY = node.y;
-    let temp = node;
-    // while (true) {
-    //   if (_.isNil(temp.parent) || temp.parent.depth === 0) break;
-    while (temp.parent && temp.parent.depth !== 0) {
-      temp = temp.parent;
-      globalX += temp.x;
-      globalY += temp.y;
-      console.log(globalX, globalY);
-    }
-
-    const dx = globalX + 0.5 * node.width;
-    const dy = globalY + 0.5 * node.height;
-    svg.transition().duration(duration).call(
-      this.zoom.transform,
-      d3.zoomIdentity.translate(0, 0).scale(t.k).translate(
-        -dx + (0.5 * width) / t.k,
-        -dy + (0.5 * height) / t.k
-      )
-    );
-  }
 
   /**
    * Prepare the SVG and returns a chart refrence. This function will create three "layers": background,
