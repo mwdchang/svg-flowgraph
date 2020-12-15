@@ -1,7 +1,7 @@
 {
-  "name": "compound-graph",
-  "version": "0.1.0",
-  "description": "A base SVG-renderer for nested/compound graphs",
+  "name": "svg-flowgraph",
+  "version": "0.1.1",
+  "description": "SVG-based renderering utilities for interacting with graphs",
   "main": "dist/cjs/main.js",
   "module": "dist/esm/main.js",
   "scripts": {
