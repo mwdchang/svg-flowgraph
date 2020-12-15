@@ -1,6 +1,6 @@
 {
   "name": "compound-graph",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A base SVG-renderer for nested/compound graphs",
   "main": "dist/cjs/main.js",
   "module": "dist/esm/main.js",
