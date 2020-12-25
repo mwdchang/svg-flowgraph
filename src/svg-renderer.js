@@ -7,10 +7,8 @@ import { flatten, traverse, removeChildren } from './utils';
 
 const pathFn = svgUtil.pathFn.curve(d3.curveBasis);
 
-
 // TODO
 // - Add/Remove without relayout
-// - Edge/node look up performance
 
 /**
  * Base support for rendering and manipulating a compound/nested graph.
@@ -56,7 +54,6 @@ export default class SVGRenderer {
    * @param {string} options.edgeControlOffsetType - "percentage" or "unit"
    * @param {numbeer} options.edgeControlOffset - If type is percentage this should be between 0 an 1,
    *   if unit then a positive value is an offset from the source, and a negative offset from the target.
-   * @param {boolean} options.useDebugger - prints debugging information
    */
   constructor(options) {
     this.registry = new Map();
@@ -65,7 +62,6 @@ export default class SVGRenderer {
     this.options.useEdgeControl = this.options.useEdgeControl || false;
     this.options.edgeControlOffsetType = this.options.edgeControlOffsetType || 'percentage';
     this.options.edgeControlOffset = this.options.edgeControlOffset || 0.66;
-    this.options.useDebugger = this.options.useDebugger || false;
     this.options.addons = this.options.addons || [];
 
     // Primitive add-on system
@@ -128,6 +124,15 @@ export default class SVGRenderer {
     this.layout = this.adapter.makeRenderingGraph(data);
   }
 
+  getBoundary() {
+    const t = d3.zoomTransform(this.chart.node());
+    const x1 = (0 - t.x) / t.k;
+    const y1 = (0 - t.y) / t.k;
+    const x2 = (this.chartSize.width) / t.k;
+    const y2 = (this.chartSize.height) / t.k;
+    return { x1, y1, x2, y2 };
+  }
+
   /**
    * Renders the graph
    */
@@ -167,9 +172,6 @@ export default class SVGRenderer {
       this.renderEdgeControls();
     }
 
-    if (options.useDebugger) {
-      this.renderDebug();
-    }
     this._enableInteraction();
 
     const svg = d3.select(this.svgEl);
@@ -200,12 +202,7 @@ export default class SVGRenderer {
         .attr('fill', '#CCC');
     }
 
-    const t = d3.zoomTransform(this.chart.node());
-    const x1 = (0 - t.x) / t.k;
-    const y1 = (0 - t.y) / t.k;
-    const x2 = (this.chartSize.width) / t.k;
-    const y2 = (this.chartSize.height) / t.k;
-
+    const { x1, y1, x2, y2 } = this.getBoundary();
     minimap.append('rect')
       .attr('x', x1)
       .attr('y', y1)
@@ -421,50 +418,6 @@ export default class SVGRenderer {
   }
 
   /**
-   * Debugging information
-   */
-  renderDebug() {
-    const chart = this.chart;
-    const options = this.options;
-    const chartSize = this.chartSize;
-    const background = d3.select(this.svgEl).select('.background-layer');
-    const width = this.layout.width < chartSize.width ? chartSize.width : this.layout.width;
-    const height = this.layout.height < chartSize.height ? chartSize.height : this.layout.height;
-    const halfW = 0.5 * width;
-    const halfH = 0.5 * height;
-    const gridData = [
-      [-5000, halfH, 5000, halfH],
-      [halfW, -5000, halfW, 5000]
-    ];
-
-    background.selectAll('.info').remove();
-    const info = background.append('g').classed('info', true);
-
-    const t = d3.zoomTransform(chart.node());
-    info.append('text').text('TS: ' + t.k.toFixed(2));
-    info.append('text').text('TX: ' + t.x.toFixed(2));
-    info.append('text').text('TY: ' + t.y.toFixed(2));
-    info.append('text').text('Mode: ' + options.renderMode);
-    info.selectAll('text')
-      .attr('x', 3)
-      .attr('y', (d, i) => (i + 1) * 14)
-      .style('font-size', '10px');
-
-    background.selectAll('.grid').remove();
-    background.selectAll('.grid')
-      .data(gridData)
-      .enter()
-      .append('path')
-      .classed('grid', true)
-      .attr('d', d => svgUtil.line(...d))
-      .style('fill', 'none')
-      .style('stroke', '#00F')
-      .style('stroke-width', 1.5)
-      .style('opacity', 0.5);
-  }
-
-
-  /**
    * Prepare the SVG and returns a chart refrence. This function will create three "layers": background,
    * data, and foreground layers. The data-layer corresponds to the chart.
    */
@@ -487,23 +440,15 @@ export default class SVGRenderer {
     const self = this;
     function zoomed(evt) {
       chart.attr('transform', evt.transform);
-      if (self.options.useDebugger) {
-        self.renderDebug();
-      }
     }
 
     function zoomEnd() {
       if (!self.layout) return;
-      const t = d3.zoomTransform(self.chart.node());
-      const x1 = (0 - t.x) / t.k;
-      const y1 = (0 - t.y) / t.k;
-      const x2 = (self.chartSize.width) / t.k;
-      const y2 = (self.chartSize.height) / t.k;
-
+      const { x1, y1, x2, y2 } = self.getBoundary();
       const minimap = d3.select(self.svgEl).select('.foreground-layer').select('.minimap');
-      minimap.select('.hhh').remove();
+      minimap.select('.current-view').remove();
       minimap.append('rect')
-        .classed('hhh', true)
+        .classed('current-view', true)
         .attr('x', x1)
         .attr('y', y1)
         .attr('width', x2)
@@ -601,7 +546,7 @@ export default class SVGRenderer {
     });
   }
 
-  // FIXME
+  // FIXME: used in nodeDrag, a bit awkward
   updateEdgePoints() {
     const chart = this.chart;
     const options = this.options;
