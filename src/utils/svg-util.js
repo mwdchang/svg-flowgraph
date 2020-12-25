@@ -7,21 +7,11 @@ import * as d3 from 'd3';
  * @param {object} svg - D3 svg selection
  * @param {number} w - width
  * @param {number} h - height
- * @param {object} viewport - optional x1, y1, x2, y2.
  */
-export const createChart = (svg, w, h, viewport = {}) => {
+export const createChart = (svg, w, h) => {
   svg.attr('width', w + 'px');
   svg.attr('height', h + 'px');
-
-  const x1 = viewport.x1 || 0;
-  const y1 = viewport.y1 || 0;
-  const x2 = viewport.x2 || w;
-  const y2 = viewport.y2 || h;
-
-  svg.attr('preserveAspectRatio', 'xMinYMin meet');
-  svg.attr('viewBox', `${x1} ${y1} ${x2} ${y2}`);
   svg.append('defs');
-
   return svg;
 };
 

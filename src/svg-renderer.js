@@ -7,24 +7,6 @@ import { flatten, traverse, removeChildren } from './utils';
 
 const pathFn = svgUtil.pathFn.curve(d3.curveBasis);
 
-// FIXME: This to move out
-
-/**
- * Just make sure the viewport has a min size so it does not look
- * super large if there are only a few elements
- *
- * @param {object} v - viewport {x2, y2, x2, y2} where x2 y2 are width height respectively
- * @param {object} chartSize - { width, height } the effective size of the chart in pixels
- */
-const ensureViewportSize = (v, chartSize) => {
-  return {
-    x1: v.x1,
-    y1: v.y1,
-    x2: Math.max(v.x2, chartSize.width),
-    y2: Math.max(v.y2, chartSize.height)
-  };
-};
-
 
 // TODO
 // - Add/Remove without relayout
@@ -51,9 +33,6 @@ const ensureViewportSize = (v, chartSize) => {
  *
  * Common/Misc
  * - renderEdgeControl
- *
- * 2. Provides utility functions to navigate and to manipulate the graph object.
- * - Center on a given node with respect to the container
  *
  * The input specification consist of two things
  * - Graph data specified as a set of nodes and edges
@@ -164,20 +143,12 @@ export default class SVGRenderer {
     if (!this.chart) {
       this.chart = this._createChart();
     } else {
-      const x1 = 0;
-      const y1 = 0;
-      const x2 = this.layout.width;
-      const y2 = this.layout.height;
-      const vp = ensureViewportSize({ x1, y1, x2, y2 }, this.chartSize);
-      d3.select(this.svgEl).attr('viewBox', `${vp.x1} ${vp.y1} ${vp.x2} ${vp.y2}`);
-
       // Reset zoom
       const svg = d3.select(this.svgEl);
       svg.transition().call(
         this.zoom.transform,
         d3.zoomIdentity
       );
-
       const maxZoom = Math.max(2, Math.floor(this.layout.width / this.chartSize.width));
       this.zoom.scaleExtent([0.5, maxZoom]);
     }
@@ -200,6 +171,49 @@ export default class SVGRenderer {
       this.renderDebug();
     }
     this._enableInteraction();
+
+    const svg = d3.select(this.svgEl);
+    const zoomLevel = 1 / (this.layout.height / this.chartSize.height);
+    // svg.transition().duration(500).call(
+    svg.call(
+      this.zoom.transform,
+      d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(
+        (-(this.layout.width * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel,
+        0
+      )
+    );
+
+    const minimapHeight = 0.125 * this.chartSize.height;
+    const minimap = d3.select(this.svgEl).select('.foreground-layer').append('g').classed('minimap', true);
+    const miniMapZoomLevel = 1 / (this.layout.height / minimapHeight);
+    minimap.attr('transform', `translate(20, 10), scale(${miniMapZoomLevel})`);
+
+    const topNodes = this.layout.nodes;
+
+    for (let i = 0; i < topNodes.length; i++) {
+      const node = topNodes[i];
+      minimap.append('rect')
+        .attr('x', node.x)
+        .attr('y', node.y)
+        .attr('width', node.width)
+        .attr('height', node.height)
+        .attr('fill', '#CCC');
+    }
+
+    const t = d3.zoomTransform(this.chart.node());
+    const x1 = (0 - t.x) / t.k;
+    const y1 = (0 - t.y) / t.k;
+    const x2 = (this.chartSize.width) / t.k;
+    const y2 = (this.chartSize.height) / t.k;
+
+    minimap.append('rect')
+      .attr('x', x1)
+      .attr('y', y1)
+      .attr('width', x2)
+      .attr('height', y2)
+      .attr('stroke', '#000')
+      .attr('stroke-width', 2)
+      .attr('fill', 'transparent');
   }
 
   // FIXME: Should provide very basic marker definitions and leave the work to the
@@ -436,7 +450,6 @@ export default class SVGRenderer {
       .attr('y', (d, i) => (i + 1) * 14)
       .style('font-size', '10px');
 
-
     background.selectAll('.grid').remove();
     background.selectAll('.grid')
       .data(gridData)
@@ -457,19 +470,10 @@ export default class SVGRenderer {
    */
   _createChart() {
     const { width, height } = this.chartSize;
-    const viewPort = {
-      x1: 0,
-      y1: 0,
-      x2: this.layout.width,
-      y2: this.layout.height
-    };
     const svg = d3.select(this.svgEl);
     svg.selectAll('*').remove();
 
-    const treatedSVG = svgUtil.createChart(svg, width, height, ensureViewportSize(viewPort, this.chartSize));
-
-    // change to xMinyMin
-    treatedSVG.attr('preserveAspectRatio', 'xMidYMid meet');
+    const treatedSVG = svgUtil.createChart(svg, width, height);
 
     // Add a debugging/background layer
     treatedSVG.append('g').classed('background-layer', true);
@@ -478,7 +482,7 @@ export default class SVGRenderer {
     const chart = treatedSVG.append('g').classed('data-layer', true);
 
     // Add a foreground layer
-    treatedSVG.append('g').classed('foreground-layer', true);
+    const foreground = treatedSVG.append('g').classed('foreground-layer', true); // eslint-disable-line
 
     const self = this;
     function zoomed(evt) {
@@ -488,8 +492,30 @@ export default class SVGRenderer {
       }
     }
 
+    function zoomEnd() {
+      if (!self.layout) return;
+      const t = d3.zoomTransform(self.chart.node());
+      const x1 = (0 - t.x) / t.k;
+      const y1 = (0 - t.y) / t.k;
+      const x2 = (self.chartSize.width) / t.k;
+      const y2 = (self.chartSize.height) / t.k;
+
+      const minimap = d3.select(self.svgEl).select('.foreground-layer').select('.minimap');
+      minimap.select('.hhh').remove();
+      minimap.append('rect')
+        .classed('hhh', true)
+        .attr('x', x1)
+        .attr('y', y1)
+        .attr('width', x2)
+        .attr('height', y2)
+        .attr('stroke', '#000')
+        .attr('stroke-width', 1)
+        .attr('fill', '#369')
+        .attr('fill-opacity', 0.1);
+    }
+
     const maxZoom = Math.max(2, Math.floor(this.layout.width / this.chartSize.width));
-    this.zoom = d3.zoom().scaleExtent([0.5, maxZoom]).on('zoom', zoomed);
+    this.zoom = d3.zoom().scaleExtent([0.5, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
     svg.call(this.zoom).on('dblclick.zoom', null);
     return chart;
   }
@@ -575,6 +601,7 @@ export default class SVGRenderer {
     });
   }
 
+  // FIXME
   updateEdgePoints() {
     const chart = this.chart;
     const options = this.options;
