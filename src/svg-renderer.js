@@ -171,27 +171,17 @@ export default class SVGRenderer {
     if (options.useEdgeControl) {
       this.renderEdgeControls();
     }
-
     this._enableInteraction();
+    this.renderMinimap();
+  }
 
-    const svg = d3.select(this.svgEl);
-    const zoomLevel = 1 / (this.layout.height / this.chartSize.height);
-    // svg.transition().duration(500).call(
-    svg.call(
-      this.zoom.transform,
-      d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(
-        (-(this.layout.width * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel,
-        0
-      )
-    );
-
+  renderMinimap() {
     const minimapHeight = 0.125 * this.chartSize.height;
     const minimap = d3.select(this.svgEl).select('.foreground-layer').append('g').classed('minimap', true);
     const miniMapZoomLevel = 1 / (this.layout.height / minimapHeight);
     minimap.attr('transform', `translate(20, 10), scale(${miniMapZoomLevel})`);
 
     const topNodes = this.layout.nodes;
-
     for (let i = 0; i < topNodes.length; i++) {
       const node = topNodes[i];
       minimap.append('rect')
@@ -201,7 +191,6 @@ export default class SVGRenderer {
         .attr('height', node.height)
         .attr('fill', '#CCC');
     }
-
     const { x1, y1, x2, y2 } = this.getBoundary();
     minimap.append('rect')
       .attr('x', x1)
@@ -302,7 +291,6 @@ export default class SVGRenderer {
     _recursiveBuild(this.layout);
     chart.selectAll('.edge').call(this.renderEdge);
   }
-
 
   /**
    * A fancier version of renderNodes, figures out the delta between
@@ -436,32 +424,6 @@ export default class SVGRenderer {
 
     // Add a foreground layer
     const foreground = treatedSVG.append('g').classed('foreground-layer', true); // eslint-disable-line
-
-    const self = this;
-    function zoomed(evt) {
-      chart.attr('transform', evt.transform);
-    }
-
-    function zoomEnd() {
-      if (!self.layout) return;
-      const { x1, y1, x2, y2 } = self.getBoundary();
-      const minimap = d3.select(self.svgEl).select('.foreground-layer').select('.minimap');
-      minimap.select('.current-view').remove();
-      minimap.append('rect')
-        .classed('current-view', true)
-        .attr('x', x1)
-        .attr('y', y1)
-        .attr('width', x2)
-        .attr('height', y2)
-        .attr('stroke', '#000')
-        .attr('stroke-width', 1)
-        .attr('fill', '#369')
-        .attr('fill-opacity', 0.1);
-    }
-
-    const maxZoom = Math.max(2, Math.floor(this.layout.width / this.chartSize.width));
-    this.zoom = d3.zoom().scaleExtent([0.5, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
-    svg.call(this.zoom).on('dblclick.zoom', null);
     return chart;
   }
 
@@ -544,6 +506,41 @@ export default class SVGRenderer {
       evt.stopPropagation();
       if (registry.has('edgeMouseLeave')) { registry.get('edgeMouseLeave')(evt, d3.select(this), self); }
     });
+
+
+    // Zoom control
+    function zoomed(evt) {
+      chart.attr('transform', evt.transform);
+    }
+    function zoomEnd() {
+      if (!self.layout) return;
+      const { x1, y1, x2, y2 } = self.getBoundary();
+      const minimap = d3.select(self.svgEl).select('.foreground-layer').select('.minimap');
+      minimap.select('.current-view').remove();
+      minimap.append('rect')
+        .classed('current-view', true)
+        .attr('x', x1)
+        .attr('y', y1)
+        .attr('width', x2)
+        .attr('height', y2)
+        .attr('stroke', '#000')
+        .attr('stroke-width', 1)
+        .attr('fill', '#369')
+        .attr('fill-opacity', 0.1);
+    }
+
+    const maxZoom = Math.max(2, Math.floor(this.layout.width / this.chartSize.width));
+    const zoomLevel = 1 / (this.layout.height / this.chartSize.height);
+    this.zoom = d3.zoom().scaleExtent([zoomLevel, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
+    svg.call(this.zoom).on('dblclick.zoom', null);
+
+    svg.call(
+      this.zoom.transform,
+      d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(
+        (-(this.layout.width * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel,
+        0
+      )
+    );
   }
 
   // FIXME: used in nodeDrag, a bit awkward
