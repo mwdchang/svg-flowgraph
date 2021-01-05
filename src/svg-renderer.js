@@ -62,6 +62,7 @@ export default class SVGRenderer {
     this.options.useEdgeControl = this.options.useEdgeControl || false;
     this.options.edgeControlOffsetType = this.options.edgeControlOffsetType || 'percentage';
     this.options.edgeControlOffset = this.options.edgeControlOffset || 0.66;
+    this.options.useMinimap = this.options.useMinimap || false;
     this.options.addons = this.options.addons || [];
 
     // Primitive add-on system
@@ -172,7 +173,10 @@ export default class SVGRenderer {
       this.renderEdgeControls();
     }
     this._enableInteraction();
-    this.renderMinimap();
+
+    if (options.useMinimap === true) {
+      this.renderMinimap();
+    }
   }
 
   renderMinimap() {
@@ -514,6 +518,7 @@ export default class SVGRenderer {
     }
     function zoomEnd() {
       if (!self.layout) return;
+      if (self.options.useMinimap === false) return;
       const { x1, y1, x2, y2 } = self.getBoundary();
       const minimap = d3.select(self.svgEl).select('.foreground-layer').select('.minimap');
       minimap.select('.current-view').remove();

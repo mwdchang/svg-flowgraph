@@ -3,17 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js" integrity="sha512-90vH1Z83AJY9DmlWa8WkjkV79yfS2n2Oxhsi2dZbIv0nC4E6m5AbH8Nh156kkM7JePmqD6tcZsfad1ueoaovww==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.3.1/d3.min.js" integrity="sha512-9H86d5lhAwgf2/u29K4N5G6pZThNOojI8kMT4nT4NHvVR02cM85M06KJRQXkI0XgQWBpzQyIyr8LVomyu1AQdw==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js" integrity="sha512-psLUZfcgPmi012lcpVHkWoOqyztollwCGu4w/mXijFMK/YcdUdP06voJNVOJ7f/dUIlO2tGlDLuypRyXX2lcvQ==" crossorigin="anonymous"></script>
-
-<!--
-<script src="lodash.min.js"></script>
-<script src="d3.v5.js"></script>
-<script src="dagre.js"></script>
--->
-<script src="./compound-graph.min.js"></script>
+<script src="./svg-flowgraph.min.js"></script>
 <title>Demo Graph</title>
 </head>
 <body>
@@ -103,7 +96,6 @@ class DagreAdapter {
     graphData.edges.forEach(e => {
       e.data = e;
     });
-    console.log('!!', graphData);
     return graphData;
   }
 
@@ -134,6 +126,9 @@ class DagreAdapter {
       node.y -= node.height * 0.5;
     });
 
+
+    let maxX = 0;
+    let maxY = 0;
     traverse(renderGraph, (n) => {
       const node = g.node(n.id);
       if (n.parent && n.parent.id) {
@@ -145,6 +140,9 @@ class DagreAdapter {
       }
       n.width = node.width;
       n.height = node.height;
+
+      if (maxX < n.x + n.width) maxX = n.x + n.width;
+      if (maxY < n.y + n.height) maxY = n.y + n.height;
     });
 
     renderGraph.edges.forEach(e => {
@@ -152,8 +150,8 @@ class DagreAdapter {
       e.points = edge.points;
     });
 
-    renderGraph.width = 500;
-    renderGraph.height = 500;
+    renderGraph.width = maxX;
+    renderGraph.height = maxY;
     return renderGraph;
   }
 }
@@ -162,6 +160,7 @@ const graph = {
   nodes: [
     { id: 'Node A', label: 'Node A' },
     { id: 'Node B', label: 'Node B' },
+    { id: 'Node C', label: 'Node C' },
     { id: 'L1', label: 'L1',
       nodes: [
         { id: 'Sub 1', label: 'Sub 1' },
@@ -181,7 +180,8 @@ const graph = {
     { id: 'Edge 1', source: 'Node A', target: 'Node B' },
     { id: 'Edge 2', source: 'Sub 1', target: 'Node B' },
     { id: 'Edge 3', source: 'L4', target: 'Node A' },
-    { id: 'Edge 4', source: 'L4', target: 'L4' }
+    { id: 'Edge 4', source: 'L4', target: 'L4' },
+    { id: 'Edge 5', source: 'Sub 1', target: 'Node C' }
   ]
 };
 
@@ -196,8 +196,8 @@ const renderer = new TestRenderer({
   el: document.getElementById('test'),
   adapter: new DagreAdapter({ nodeWidth: 100, nodeHeight: 50 }),
   renderMode: 'basic',
-  useDebugger: false,
   useEdgeControl: false,
+  useMinimap: true,
   addons: [ group, nodeSize, highlight, nodeDrag, expandCollapse, panZoom ]
 });
 
