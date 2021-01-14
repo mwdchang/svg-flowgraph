@@ -1,9 +1,13 @@
 {
   "name": "svg-flowgraph",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "SVG-based renderering utilities for interacting with graphs",
   "main": "dist/cjs/main.js",
   "module": "dist/esm/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mwdchang/svg-flowgraph"
+  },
   "scripts": {
     "build": "rollup -c config/rollup.lib.js",
     "dev": "rollup -c config/rollup.dev.js -w"
