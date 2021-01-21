@@ -534,9 +534,10 @@ export default class SVGRenderer {
         .attr('fill-opacity', 0.1);
     }
 
+    const minZoom = 0.05;
     const maxZoom = Math.max(2, Math.floor(this.layout.width / this.chartSize.width));
-    const zoomLevel = 1 / (this.layout.height / this.chartSize.height);
-    this.zoom = d3.zoom().scaleExtent([zoomLevel, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
+    const zoomLevel = Math.min(1, 1 / (this.layout.height / this.chartSize.height));
+    this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
     svg.call(this.zoom).on('dblclick.zoom', null);
 
     svg.call(
