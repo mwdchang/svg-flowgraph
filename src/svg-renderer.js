@@ -544,7 +544,7 @@ export default class SVGRenderer {
       this.zoom.transform,
       d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(
         (-(this.layout.width * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel,
-        0
+        (-(this.layout.height * zoomLevel * 0.5) + 0.5 * this.chartSize.height) / zoomLevel
       )
     );
   }
