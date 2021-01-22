@@ -148,15 +148,6 @@ export default class SVGRenderer {
     // we need to recalculate the viewport dimensions
     if (!this.chart) {
       this.chart = this._createChart();
-    } else {
-      // Reset zoom
-      const svg = d3.select(this.svgEl);
-      svg.transition().call(
-        this.zoom.transform,
-        d3.zoomIdentity
-      );
-      const maxZoom = Math.max(2, Math.floor(this.layout.width / this.chartSize.width));
-      this.zoom.scaleExtent([0.5, maxZoom]);
     }
 
     this.buildDefs();
