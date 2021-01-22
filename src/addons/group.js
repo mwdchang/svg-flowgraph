@@ -42,7 +42,7 @@ const group = (G) => {
     // 2) Add new gruop node
     parentData.nodes.push(groupNode);
 
-    G.render();
+    await G.render();
   };
 
   /**
@@ -65,7 +65,7 @@ const group = (G) => {
     });
     delete groupData.nodes;
 
-    G.render();
+    await G.render();
   };
 
   return [
