@@ -327,9 +327,7 @@ export default class SVGRenderer {
           _recursiveBuild(selection.select('.node-children'), d.nodes);
         });
 
-        g.transition().duration(1000).attr('transform', d => {
-          return svgUtil.translate(d.x, d.y);
-        });
+        g.attr('transform', d => svgUtil.translate(d.x, d.y));
       });
     };
     _recursiveBuild(chart, this.layout.nodes);
