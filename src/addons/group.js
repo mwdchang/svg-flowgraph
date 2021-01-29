@@ -7,7 +7,7 @@ const group = (G) => {
    * @param {string} groupName
    * @param {array} nodeIds - node identifiers
    */
-  const group = async(groupName, nodeIds) => {
+  const group = (groupName, nodeIds) => {
     const chart = G.chart;
 
     // 0) check parent
@@ -41,15 +41,13 @@ const group = (G) => {
 
     // 2) Add new gruop node
     parentData.nodes.push(groupNode);
-
-    await G.render();
   };
 
   /**
    * Ungroup
    * @param {string} groupName
    */
-  const ungroup = async (groupName) => {
+  const ungroup = (groupName) => {
     const chart = G.chart;
     const groupData = chart.selectAll('.node').filter(d => d.id === groupName).data()[0];
     const parentData = groupData.parent;
@@ -64,8 +62,6 @@ const group = (G) => {
       parentData.nodes.push(temp);
     });
     delete groupData.nodes;
-
-    await G.render();
   };
 
   return [
