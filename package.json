@@ -1,6 +1,6 @@
 {
   "name": "svg-flowgraph",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "SVG-based renderering utilities for interacting with graphs",
   "main": "dist/cjs/main.js",
   "module": "dist/esm/main.js",

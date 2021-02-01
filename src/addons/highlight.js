@@ -68,15 +68,16 @@ const highlight = (G) => {
     });
     hEdges.style('filter', `url(#${highlightId})`).classed(`${highlightId}`, true);
 
-    svg.select(`#${highlightId}`).select('feGaussianBlur')
-      .transition()
-      .duration(duration)
-      .attr('stdDeviation', 0)
-      .on('end', () => {
-        hNodes.style('filter', null);
-        hEdges.style('filter', null);
-      });
-
+    if (duration > 0) {
+      svg.select(`#${highlightId}`).select('feGaussianBlur')
+        .transition()
+        .duration(duration)
+        .attr('stdDeviation', 0)
+        .on('end', () => {
+          hNodes.style('filter', null);
+          hEdges.style('filter', null);
+        });
+    }
     return highlightId;
   };
 

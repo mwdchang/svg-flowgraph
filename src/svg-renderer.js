@@ -60,6 +60,9 @@ export default class SVGRenderer {
     this.options = options || {};
     this.options.renderMode = this.options.renderMode || 'basic';
     this.options.useEdgeControl = this.options.useEdgeControl || false;
+    if (_.isNil(this.options.useZoom)) {
+      this.options.useZoom = true;
+    }
     this.options.edgeControlOffsetType = this.options.edgeControlOffsetType || 'percentage';
     this.options.edgeControlOffset = this.options.edgeControlOffset || 0.66;
     this.options.useMinimap = this.options.useMinimap || false;
@@ -503,11 +506,12 @@ export default class SVGRenderer {
 
     // Zoom control
     function zoomed(evt) {
+      if (self.options.useZoom === false) return;
       chart.attr('transform', evt.transform);
     }
     function zoomEnd() {
       if (!self.layout) return;
-      if (self.options.useMinimap === false) return;
+      if (self.options.useMinimap === false || self.options.useZoom === false) return;
       const { x1, y1, x2, y2 } = self.getBoundary();
       const minimap = d3.select(self.svgEl).select('.foreground-layer').select('.minimap');
       minimap.select('.current-view').remove();
