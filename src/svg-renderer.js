@@ -331,6 +331,10 @@ export default class SVGRenderer {
         });
 
         g.attr('transform', d => svgUtil.translate(d.x, d.y));
+
+        // g.transition().duration(1000).attr('transform', d => {
+        //   return svgUtil.translate(d.x, d.y);
+        // });
       });
     };
     _recursiveBuild(chart, this.layout.nodes);
