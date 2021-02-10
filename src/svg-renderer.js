@@ -264,7 +264,7 @@ export default class SVGRenderer {
       d3.select(this).selectAll('.edge-path').datum(d);
     });
 
-    chart.selectAll('.edge').filter(d => d.state === 'new').call(this.renderEdgeAdded);
+    chart.selectAll('.edge').filter(d => d.state === 'new').call(this.renderEdgeAdded).call(this.enableEdgeInteraction, this);
     chart.selectAll('.edge').filter(d => d.state === 'updated').call(this.renderEdgeUpdated);
     chart.selectAll('.edge').filter(d => d.state === 'removed').call(this.renderEdgeRemoved);
   }
@@ -287,7 +287,7 @@ export default class SVGRenderer {
         .classed('edge', true);
     };
     _recursiveBuild(this.layout);
-    chart.selectAll('.edge').call(this.renderEdge);
+    chart.selectAll('.edge').call(this.renderEdge).call(this.enableEdgeInteraction, this);
   }
 
   /**
@@ -339,7 +339,7 @@ export default class SVGRenderer {
     };
     _recursiveBuild(chart, this.layout.nodes);
 
-    chart.selectAll('.node-ui').filter(d => d.state === 'new').call(this.renderNodeAdded);
+    chart.selectAll('.node-ui').filter(d => d.state === 'new').call(this.renderNodeAdded).call(this.enableNodeInteraction, this);
     chart.selectAll('.node-ui').filter(d => d.state === 'updated').call(this.renderNodeUpdated);
     chart.selectAll('.node-ui').filter(d => d.state === 'removed').call(this.renderNodeRemoved);
   }
@@ -368,7 +368,7 @@ export default class SVGRenderer {
       });
     };
     _recursiveBuild(chart, this.layout.nodes);
-    chart.selectAll('.node-ui').call(this.renderNode);
+    chart.selectAll('.node-ui').call(this.renderNode).call(this.enableNodeInteraction, this);
   }
 
   calculateEdgeControlPlacement(pathNode) {
@@ -427,6 +427,64 @@ export default class SVGRenderer {
     return chart;
   }
 
+  enableNodeInteraction(selection, renderer) {
+    selection.each((nodeData, nodeIndex, nodes) => {
+      const node = d3.select(nodes[nodeIndex]);
+      const registry = renderer.registry;
+
+      node.on('dblclick', function(evt) {
+        evt.stopPropagation();
+        if (registry.has('nodeDblClick')) {
+          window.clearTimeout(renderer.clickTimer);
+          registry.get('nodeDblClick')(evt, d3.select(this), renderer);
+        }
+      });
+
+      node.on('click', function(evt) {
+        evt.stopPropagation();
+        if (registry.has('nodeClick')) {
+          const _this = this;
+          window.clearTimeout(renderer.clickTimer);
+          renderer.clickTimer = window.setTimeout(() => {
+            registry.get('nodeClick')(evt, d3.select(_this), renderer);
+          }, 200);
+        }
+      });
+
+      node.on('mouseenter', function(evt) {
+        evt.stopPropagation();
+        if (registry.has('nodeMouseEnter')) { registry.get('nodeMouseEnter')(evt, d3.select(this), renderer); }
+      });
+
+      node.on('mouseleave', function(evt) {
+        evt.stopPropagation();
+        if (registry.has('nodeMouseLeave')) { registry.get('nodeMouseLeave')(evt, d3.select(this), renderer); }
+      });
+    });
+  }
+
+  enableEdgeInteraction(selection, renderer) {
+    selection.each((edgeData, edgeIndex, edges) => {
+      const edge = d3.select(edges[edgeIndex]);
+      const registry = renderer.registry;
+
+      edge.on('click', function(evt) {
+        evt.stopPropagation();
+        if (registry.has('edgeClick')) { registry.get('edgeClick')(evt, d3.select(this), renderer); }
+      });
+
+      edge.on('mouseenter', function(evt) {
+        evt.stopPropagation();
+        if (registry.has('edgeMouseEnter')) { registry.get('edgeMouseEnter')(evt, d3.select(this), renderer); }
+      });
+
+      edge.on('mouseleave', function(evt) {
+        evt.stopPropagation();
+        if (registry.has('edgeMouseLeave')) { registry.get('edgeMouseLeave')(evt, d3.select(this), renderer); }
+      });
+    });
+  }
+
   /**
    * Standard interaction hooks, these are essentially callback functions
    * that takes in two parameters: A d3 selection of the element, and a
@@ -462,51 +520,6 @@ export default class SVGRenderer {
         });
       }
     });
-
-    nodes.on('dblclick', function(evt) {
-      evt.stopPropagation();
-      if (registry.has('nodeDblClick')) {
-        window.clearTimeout(self.clickTimer);
-        registry.get('nodeDblClick')(evt, d3.select(this), self);
-      }
-    });
-
-    nodes.on('click', function(evt) {
-      evt.stopPropagation();
-      if (registry.has('nodeClick')) {
-        const _this = this;
-        window.clearTimeout(self.clickTimer);
-        self.clickTimer = window.setTimeout(() => {
-          registry.get('nodeClick')(evt, d3.select(_this), self);
-        }, 200);
-      }
-    });
-
-    nodes.on('mouseenter', function(evt) {
-      evt.stopPropagation();
-      if (registry.has('nodeMouseEnter')) { registry.get('nodeMouseEnter')(evt, d3.select(this), self); }
-    });
-
-    nodes.on('mouseleave', function(evt) {
-      evt.stopPropagation();
-      if (registry.has('nodeMouseLeave')) { registry.get('nodeMouseLeave')(evt, d3.select(this), self); }
-    });
-
-    edges.on('click', function(evt) {
-      evt.stopPropagation();
-      if (registry.has('edgeClick')) { registry.get('edgeClick')(evt, d3.select(this), self); }
-    });
-
-    edges.on('mouseenter', function(evt) {
-      evt.stopPropagation();
-      if (registry.has('edgeMouseEnter')) { registry.get('edgeMouseEnter')(evt, d3.select(this), self); }
-    });
-
-    edges.on('mouseleave', function(evt) {
-      evt.stopPropagation();
-      if (registry.has('edgeMouseLeave')) { registry.get('edgeMouseLeave')(evt, d3.select(this), self); }
-    });
-
 
     // Zoom control
     function zoomed(evt) {
