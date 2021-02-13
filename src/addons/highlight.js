@@ -72,10 +72,11 @@ const highlight = (G) => {
       svg.select(`#${highlightId}`).select('feGaussianBlur')
         .transition()
         .duration(duration)
-        .attr('stdDeviation', 0)
+        .attr('stdDeviation', 0.1) // Set to 0 create a weird flashing effect
         .on('end', () => {
           hNodes.style('filter', null);
           hEdges.style('filter', null);
+          svg.select(`#${highlightId}`).remove();
         });
     }
     return highlightId;
