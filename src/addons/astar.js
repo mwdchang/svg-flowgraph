@@ -48,11 +48,12 @@ const astar = (G) => {
       ];
     };
 
+    // TOOD: consider replacing pAsKey/keyAsP/gScore/fScore with a js Map or something with a cleaner feeling interface
     openSet.push(pAsKey(startOnGrid));
     gScore[pAsKey(startOnGrid)] = 0;
     fScore[pAsKey(startOnGrid)] = heuristic(startOnGrid);
 
-    // FIXME: quite slow, but it's not much code and it seems to be fast enough for now
+    // TODO: fairly slow, but it's not much code and it seems to be fast enough for now - consider switching to a priority queue or fibonacci heap later
     const getMin = () => {
       let minScore = Number.MAX_VALUE;
       let minKey = '';
@@ -78,7 +79,7 @@ const astar = (G) => {
       openSet.splice(openSet.indexOf(currentKey), 1);
 
       const neighbours = getNeighbours(current, grid); // canadian spelling, sorry not sorry eh
-      // getJumpPoints used to be here but not anymore no one knows where it went, i guess it went home
+      // TODO: getJumpPoints used to be here but not anymore no one knows where it went, i guess it went home
 
       for (let i = 0; i < neighbours.length; i++) {
         const neighbour = neighbours[i];
