@@ -1,6 +1,3 @@
-import _ from 'lodash';
-import * as d3 from 'd3';
-
 const astar = (G) => {
   /**
    * A* super basic path searching, not terribly optimized but fast enough for me
@@ -11,13 +8,13 @@ const astar = (G) => {
    * @param {object} gridCell - optional {w:%, h:%}, default 10,10 - routing is done on this grid
    * @param {number} searchLimit - this is the max number of grid squares astar will search, default 1000
    */
-  const getPath = (start, goal, collider = () => false, gridCell = { w:10, h:10 }, searchLimit = 1000) => {
+  const getPath = (start, goal, collider = () => false, gridCell = { w: 10, h: 10 }, searchLimit = 1000) => {
     const pAsKey = (p) => `${p.x},${p.y}`;
     const keyAsP = (key) => ({ x: parseInt(key.split(',')[0]), y: parseInt(key.split(',')[1]) });
-    
+
     const sqDifference = (a, b) => (a - b) * (a - b);
     const sqDistance = (p1, p2) => sqDifference(p1.x, p2.x) + sqDifference(p1.y, p2.y);
-    
+
     const heuristic = (p) => sqDistance(p, goal) * 1.2;
     const pEqual = (p1, p2) => p1.x === p2.x && p1.y === p2.y;
 
@@ -111,7 +108,7 @@ const astar = (G) => {
       }
     }
     return [start, goal];
-  }
+  };
 
   return [
     { name: 'getPath', fn: getPath }
