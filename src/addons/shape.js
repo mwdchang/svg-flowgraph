@@ -2,22 +2,22 @@
 const shape = (G) => {
 
   const simplifyDPStep = (points, first, last, sqTolerance, simplified) => {
-    const getSqSegDist = (p, p1, p2) => {
-      const getSqDiff = (a, b) => (a - b) * (a - b);
-      const getSqDist = (p1, p2) => getSqDiff(p1.x, p2.x) + getSqDiff(p1.y, p2.y);
+    const sqSegmentDistance = (p, p1, p2) => {
+      const sqDifference = (a, b) => (a - b) * (a - b);
+      const sqDistance = (p1, p2) => sqDifference(p1.x, p2.x) + sqDifference(p1.y, p2.y);
 
-      if (p1.x === p2.x && p1.y === p2.y) return getSqDist(p, p1);
+      if (p1.x === p2.x && p1.y === p2.y) return sqDistance(p, p1);
 
-      const t = ((p.x - p1.x) * (p2.x - p1.x) + (p.y - p1.y) * (p2.y - p1.y)) / getSqDist(p2, p1);
-      if (t > 1) return getSqDist(p, p2);
-      else if (t > 0) return getSqDist(p, { x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t });
-      else return getSqDist(p, p1);
+      const t = ((p.x - p1.x) * (p2.x - p1.x) + (p.y - p1.y) * (p2.y - p1.y)) / sqDistance(p2, p1);
+      if (t > 1) return sqDistance(p, p2);
+      else if (t > 0) return sqDistance(p, { x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t });
+      else return sqDistance(p, p1);
     }
 
     let maxSqDist = sqTolerance, index;
 
     for (let i = first + 1; i < last; i++) {
-      const sqDist = getSqSegDist(points[i], points[first], points[last]);
+      const sqDist = sqSegmentDistance(points[i], points[first], points[last]);
       if (sqDist > maxSqDist) {
         index = i;
         maxSqDist = sqDist;
@@ -39,7 +39,14 @@ const shape = (G) => {
     return simplified;
   }
 
-  const simplifyPath = (points, tolerance = 10.0) => {
+  /**
+   * Ramer-Douglas-Peucker shape simplification algorithm
+   * https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
+   *
+   * @param {array} points - array of coords {x:%, y:%}
+   * @param {number} tolerance - distance from shape which triggers recursive simplification
+   */
+  const simplifyPath = (points, tolerance = 8.0) => {
     if (points.length <= 2) return points;
     return simplifyDouglasPeucker(points, tolerance * tolerance);
   }
