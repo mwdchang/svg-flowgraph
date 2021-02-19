@@ -495,8 +495,6 @@ export default class SVGRenderer {
     const self = this;
     const registry = this.registry;
     const svg = d3.select(this.svgEl);
-    const nodes = chart.selectAll('.node');
-    const edges = chart.selectAll('.edge');
     self.clickTimer = null;
 
     svg.on('click', function (evt) {
