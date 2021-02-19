@@ -7,9 +7,6 @@ import { flatten, traverse, removeChildren } from './utils';
 
 const pathFn = svgUtil.pathFn.curve(d3.curveBasis);
 
-// TODO
-// - Add/Remove without relayout
-
 /**
  * Base support for rendering and manipulating a compound/nested graph.
  *
@@ -331,10 +328,6 @@ export default class SVGRenderer {
         });
 
         g.attr('transform', d => svgUtil.translate(d.x, d.y));
-
-        // g.transition().duration(1000).attr('transform', d => {
-        //   return svgUtil.translate(d.x, d.y);
-        // });
       });
     };
     _recursiveBuild(chart, this.layout.nodes);
