@@ -1,3 +1,62 @@
+class BinaryHeap {
+  constructor(maxsize, scoreFn) {
+    this.size = 0;
+    this.maxsize = maxsize;
+    this.data = new Array(this.maxsize + 1);
+    this.scoreFn = scoreFn;
+  }
+
+  getParent(index) { return Math.round(index / 2); }
+  getLeftChild(index) { return 2 * index; }
+  getRightChild(index) { return 2 * index + 1; }
+  isLeaf(index) { return index >= this.size / 2 && index <= this.size; }
+
+  swap(indexA, indexB) {
+    const tmp = this.data[indexA];
+    this.data[indexA] = this.data[indexB];
+    this.data[indexB] = tmp;
+  }
+
+  heapify(index) {
+    if (this.isLeaf(index)) return;
+    const scoreFn = this.scoreFn;
+    const data = this.data;
+    const e = data[index];
+    const leftChildIndex = this.getLeftChild(index);
+    const rightChildIndex = this.getRightChild(index);
+
+    if (scoreFn(e) > scoreFn(data[leftChildIndex]) || scoreFn(e) > scoreFn(data[rightChildIndex])) {
+      if (scoreFn(data[leftChildIndex]) < scoreFn(data[rightChildIndex])) {
+        this.swap(index, leftChildIndex);
+        this.heapify(this.getLeftChild(index));
+      } else {
+        this.swap(index, rightChildIndex);
+        this.heapify(this.getRightChild(index));
+      }
+    }
+  }
+
+  insert(e) {
+    if (this.size >= this.maxsize) return;
+    const scoreFn = this.scoreFn;
+    this.data[++this.size] = e;
+
+    let currentIndex = this.size;
+    while (scoreFn(this.data[currentIndex]) < scoreFn(this.data[this.getParent(currentIndex)])) {
+      this.swap(currentIndex, this.getParent(currentIndex));
+      currentIndex = this.getParent(currentIndex);
+    }
+  }
+
+  pop() {
+    const e = this.data[1];
+    this.data[1] = this.data[this.size - 1];
+    this.size--;
+    this.heapify(1);
+    return e;
+  }
+}
+
 const astar = (G) => {
   /**
    * A* super basic path searching, not terribly optimized but fast enough for me
@@ -8,9 +67,17 @@ const astar = (G) => {
    * @param {object} gridCell - optional {w:%, h:%}, default 10,10 - routing is done on this grid
    * @param {number} searchLimit - this is the max number of grid squares astar will search, default 1000
    */
-  const getPath = (start, goal, collider = () => false, gridCell = { w: 10, h: 10 }, searchLimit = 1000) => {
-    const pAsKey = (p) => `${p.x},${p.y}`;
-    const keyAsP = (key) => ({ x: parseInt(key.split(',')[0]), y: parseInt(key.split(',')[1]) });
+  const getPath = (start, goal, collider = () => false, gridCell = { w: 10, h: 10 }, searchLimit = 5000) => {
+    const PRIME = 756065179;
+    const SIZE = 8000;
+    const pAsKey = (p) => {
+      return (Math.round(p.x) + SIZE) * PRIME + (p.y + SIZE);
+    };
+    const keyAsP = (v) => {
+      const y = v % PRIME;
+      const x = (v - y) / PRIME;
+      return { x: x - SIZE, y: y - SIZE };
+    };
 
     const sqDifference = (a, b) => (a - b) * (a - b);
     const sqDistance = (p1, p2) => sqDifference(p1.x, p2.x) + sqDifference(p1.y, p2.y);
@@ -27,10 +94,12 @@ const astar = (G) => {
       return [start, goal];
     }
 
-    const openSet = [];
     const cameFrom = [];
-    const gScore = [];
-    const fScore = [];
+    const gScore = {};
+    const fScore = {};
+    const heap = new BinaryHeap(9999, (e) => {
+      return fScore[e];
+    });
 
     const getNeighbours = (p, grid) => {
       return [
@@ -49,34 +118,19 @@ const astar = (G) => {
     };
 
     // TOOD: consider replacing pAsKey/keyAsP/gScore/fScore with a js Map or something with a cleaner feeling interface
-    openSet.push(pAsKey(startOnGrid));
+    heap.insert(pAsKey(startOnGrid));
     gScore[pAsKey(startOnGrid)] = 0;
     fScore[pAsKey(startOnGrid)] = heuristic(startOnGrid);
 
-    // TODO: fairly slow, but it's not much code and it seems to be fast enough for now - consider switching to a priority queue or fibonacci heap later
-    const getMin = () => {
-      let minScore = Number.MAX_VALUE;
-      let minKey = '';
-      for (let i = 0; i < openSet.length; i++) {
-        const key = openSet[i];
-        if (fScore[key] < minScore) {
-          minScore = fScore[key];
-          minKey = key;
-        }
-      }
-      return minKey;
-    };
-
     let count = 0;
-    while (openSet.length > 0) {
+    while (heap.size > 0) {
       count = count + 1;
-      if (count > 1000) {
+      if (count > 5000) {
         break;
       }
 
-      const currentKey = getMin(fScore);
+      const currentKey = heap.pop();
       const current = keyAsP(currentKey);
-      openSet.splice(openSet.indexOf(currentKey), 1);
 
       const neighbours = getNeighbours(current, gridCell); // canadian spelling, sorry not sorry eh
       // TODO: getJumpPoints used to be here but not anymore no one knows where it went, i guess it went home
@@ -101,8 +155,8 @@ const astar = (G) => {
           cameFrom[neighbourKey] = currentKey;
           gScore[neighbourKey] = tentativeScore;
           fScore[neighbourKey] = tentativeScore + heuristic(neighbour);
-          if (openSet.indexOf(neighbourKey) === -1) {
-            openSet.push(neighbourKey);
+          if (heap.data.indexOf(neighbourKey) === -1) {
+            heap.insert(neighbourKey);
           }
         }
       }
