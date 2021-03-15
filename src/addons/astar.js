@@ -125,7 +125,7 @@ const astar = (G) => {
     let count = 0;
     while (heap.size > 0) {
       count = count + 1;
-      if (count > 5000) {
+      if (count > searchLimit) {
         break;
       }
 
