@@ -197,6 +197,14 @@ export default class SVGRenderer {
       .attr('fill', 'transparent');
   }
 
+  renderEdgeControl(edgeSelection) {
+    edgeSelection.append('circle')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', 10)
+      .attr('fill', '#f80');
+  }
+
   // FIXME: Should provide very basic marker definitions and leave the work to the
   // implementation renderers
   buildDefs() {
