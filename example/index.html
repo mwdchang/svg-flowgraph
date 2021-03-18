@@ -196,7 +196,7 @@ const renderer = new TestRenderer({
   el: document.getElementById('test'),
   adapter: new DagreAdapter({ nodeWidth: 100, nodeHeight: 50 }),
   renderMode: 'basic',
-  useEdgeControl: false,
+  useEdgeControl: true,
   useMinimap: true,
   addons: [ group, nodeSize, highlight, nodeDrag, expandCollapse, panZoom ]
 });
