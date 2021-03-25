@@ -18,6 +18,15 @@ const pathFn = d3.line() .x(d => d.x) .y(d => d.y);
 
 
 class TestRenderer extends myLibrary.SVGRenderer {
+
+  renderEdgeControl(selection) {
+    selection.append('circle')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', 10)
+      .attr('fill', '#f80');
+  }
+
   renderNode(nodeSelection) {
     nodeSelection.each(function() {
       const selection = d3.select(this);
@@ -196,15 +205,23 @@ const renderer = new TestRenderer({
   el: document.getElementById('test'),
   adapter: new DagreAdapter({ nodeWidth: 100, nodeHeight: 50 }),
   renderMode: 'basic',
-  useEdgeControl: false,
+  useEdgeControl: true,
   useMinimap: true,
   addons: [ group, nodeSize, highlight, nodeDrag, expandCollapse, panZoom ]
 });
 
 renderer.setData(graph);
 renderer.render().then(() => {
-  renderer.enableDrag();
+  renderer.enableDrag(true);
 });
 window.renderer = renderer;
+
+// Test
+// const start = (new Date()).getTime();
+// const p = renderer.getPath({x:0, y:0}, {x: 19000, y: 19000}, () => false);
+// const end = (new Date()).getTime();
+// console.log('path length', p.length);
+// console.log(end - start);
+
 </script>
 </html>
