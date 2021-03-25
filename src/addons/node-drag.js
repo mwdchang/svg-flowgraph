@@ -75,6 +75,8 @@ const nodeDrag = (G) => {
         const buffer = 10;
         for (let i = 0; i < data.nodes.length; i++) {
           const node = data.nodes[i];
+          // FIXME: Thi is  a hack to get around hierarhical geometries, will need to
+          // relax this guard.
           if (node.nodes) return false;
           if (p.x >= node.x - buffer && p.x <= node.x + node.width + buffer) {
             if (p.y >= node.y - buffer && p.y <= node.y + node.height + buffer) {
