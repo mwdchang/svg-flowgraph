@@ -5,7 +5,15 @@ import { nodeDrag } from './addons/node-drag';
 import { highlight } from './addons/highlight';
 import { expandCollapse } from './addons/expand-collapse';
 import { panZoom } from './addons/panZoom';
-import { astar } from './addons/astar';
-import { shape } from './addons/shape';
+import { getAStarPath } from './utils/a-star';
+import { simplifyPath, addPoints } from './utils/simplify';
 
-export { SVGRenderer, group, nodeSize, highlight, nodeDrag, expandCollapse, panZoom, astar, shape };
+export {
+  // Core and extensions
+  SVGRenderer, group, nodeSize, highlight, nodeDrag, expandCollapse, panZoom,
+
+  // Utilities
+  getAStarPath,
+  simplifyPath,
+  addPoints
+};
