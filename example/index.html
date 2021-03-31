@@ -76,15 +76,6 @@ class TestRenderer extends myLibrary.SVGRenderer {
   }
 }
 
-const traverse = (root, callBackFn, p) => {
-  callBackFn(root, p);
-  if (root.nodes) {
-    for (let i = 0; i < root.nodes.length; i++) {
-      traverse(root.nodes[i], callBackFn, root);
-    }
-  }
-};
-
 // An example Adapter using Dagre (Not compounded)
 class DagreAdapter {
   constructor(options) {
@@ -93,12 +84,11 @@ class DagreAdapter {
   }
 
   makeRenderingGraph(graphData) {
-    traverse(graphData, (node, parent) => {
+    traverse(graphData, (node) => {
       if (! node.nodes) {
         node.width = this.nodeWidth;
         node.height = this.nodeHeight;
       }
-      if (parent) node.parent = parent;
       node.data = node;
     }, null);
 
@@ -119,8 +109,11 @@ class DagreAdapter {
       } else {
         g.setNode(n.id, { label: n.label });
       }
-      if (n.parent) {
-        g.setParent(n.id, n.parent.id);
+      if (n.nodes) {
+        for (let i = 0; i < n.nodes.length; i++) {
+          g.setParent(n.nodes[i].id, n.id);
+          console.log(n.nodes[i].id, n.id);
+        }
       }
     });
 
@@ -135,21 +128,19 @@ class DagreAdapter {
       node.y -= node.height * 0.5;
     });
 
-
-    let maxX = 0;
-    let maxY = 0;
+    let maxX = 500;
+    let maxY = 500;
     traverse(renderGraph, (n) => {
       const node = g.node(n.id);
-      if (n.parent && n.parent.id) {
-        n.x = node.x - g.node(n.parent.id).x;
-        n.y = node.y - g.node(n.parent.id).y;
-      } else {
-        n.x = node.x;
-        n.y = node.y;
+      const pId = g.parent(n.id);
+      n.x = node.x;
+      n.y = node.y;
+      if (pId) {
+        n.x -= g.node(pId).x;
+        n.y -= g.node(pId).y;
       }
       n.width = node.width;
       n.height = node.height;
-
       if (maxX < n.x + n.width) maxX = n.x + n.width;
       if (maxY < n.y + n.height) maxY = n.y + n.height;
     });
@@ -166,6 +157,7 @@ class DagreAdapter {
 }
 
 const graph = {
+  id: 'container',
   nodes: [
     { id: 'Node A', label: 'Node A' },
     { id: 'Node B', label: 'Node B' },
@@ -200,6 +192,7 @@ const nodeDrag = myLibrary.nodeDrag;
 const highlight = myLibrary.highlight;
 const expandCollapse = myLibrary.expandCollapse;
 const panZoom = myLibrary.panZoom;
+const traverse = myLibrary.traverse;
 
 const renderer = new TestRenderer({
   el: document.getElementById('test'),

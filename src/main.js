@@ -7,6 +7,7 @@ import { expandCollapse } from './addons/expand-collapse';
 import { panZoom } from './addons/panZoom';
 import { getAStarPath } from './utils/a-star';
 import { simplifyPath, addPoints } from './utils/simplify';
+import { traverse } from './utils/traverse';
 
 export {
   // Core and extensions
@@ -15,5 +16,6 @@ export {
   // Utilities
   getAStarPath,
   simplifyPath,
-  addPoints
+  addPoints,
+  traverse
 };

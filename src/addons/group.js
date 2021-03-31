@@ -12,7 +12,7 @@ const group = (G) => {
 
     // 0) check parent
     const nodesData = chart.selectAll('.node').filter(d => nodeIds.includes(d.id)).data();
-    if (_.uniq(nodesData.map(d => d.parent.id)).length !== 1) {
+    if (_.uniq(nodesData.map(d => G.parentMap.get(d.id).id)).length !== 1) {
       console.log('Cannot group across different levels');
       return;
     }
@@ -21,26 +21,25 @@ const group = (G) => {
       id: groupName,
       label: groupName,
       concept: groupName,
-      depth: nodesData[0].depth,
       type: 'custom',
-      parent: nodesData[0].parent,
       nodes: [],
       data: { label: groupName }
     };
 
     // 1) Move nodes to new group
-    const parentData = nodesData[0].parent;
+    const parentData = G.parentMap.get(nodesData[0].id);
     nodeIds.forEach(nodeId => {
       const temp = _.remove(parentData.nodes, node => node.id === nodeId)[0];
 
       // Need to create a new node wrapper to avoid double pointers problem
       const newNode = { ...temp };
-      newNode.parent = groupNode;
       groupNode.nodes.push(newNode);
     });
 
     // 2) Add new gruop node
     parentData.nodes.push(groupNode);
+
+    G.calculteMaps();
   };
 
   /**
