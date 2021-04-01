@@ -20,7 +20,6 @@ const group = (G) => {
     const groupNode = {
       id: groupName,
       label: groupName,
-      concept: groupName,
       type: 'custom',
       nodes: [],
       data: { label: groupName }
@@ -39,7 +38,7 @@ const group = (G) => {
     // 2) Add new gruop node
     parentData.nodes.push(groupNode);
 
-    G.calculteMaps();
+    G.calculateMaps();
   };
 
   /**

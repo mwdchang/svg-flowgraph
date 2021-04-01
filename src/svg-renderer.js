@@ -124,10 +124,10 @@ export default class SVGRenderer {
    */
   setData(data) {
     this.layout = this.adapter.makeRenderingGraph(data);
-    this.calculteMaps();
+    this.calculateMaps();
   }
 
-  calculteMaps() {
+  calculateMaps() {
     this.parentMap.clear();
     traverse(this.layout, node => {
       if (node.nodes) {
