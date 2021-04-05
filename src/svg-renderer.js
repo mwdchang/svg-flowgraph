@@ -54,6 +54,7 @@ export default class SVGRenderer {
    */
   constructor(options) {
     this.registry = new Map();
+    this.parentMap = new Map();
     this.options = options || {};
     this.options.renderMode = this.options.renderMode || 'basic';
     this.options.useEdgeControl = this.options.useEdgeControl || false;
@@ -123,6 +124,19 @@ export default class SVGRenderer {
    */
   setData(data) {
     this.layout = this.adapter.makeRenderingGraph(data);
+    this.calculateMaps();
+  }
+
+  calculateMaps() {
+    this.parentMap.clear();
+    traverse(this.layout, node => {
+      if (node.nodes) {
+        node.nodes.forEach(n => {
+          this.parentMap.set(n.id, node);
+        });
+      }
+    });
+    console.log(this.parentMap);
   }
 
   getBoundary() {
