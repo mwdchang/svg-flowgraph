@@ -112,7 +112,6 @@ class DagreAdapter {
       if (n.nodes) {
         for (let i = 0; i < n.nodes.length; i++) {
           g.setParent(n.nodes[i].id, n.id);
-          console.log(n.nodes[i].id, n.id);
         }
       }
     });

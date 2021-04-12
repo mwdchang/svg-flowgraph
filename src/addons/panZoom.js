@@ -38,12 +38,14 @@ const panZoom = (G) => {
     const node = chart.selectAll('.node').filter(d => d.id === nodeId);
     if (_.isNil(node)) return;
 
+    const parentMap = G.parentMap;
+
     let temp = node.datum();
     let globalX = temp.x;
     let globalY = temp.y;
 
-    while (_.isNil(temp.parent)) {
-      temp = temp.parent;
+    while (parentMap.has(temp.id) === true) {
+      temp = parentMap.get(temp.id);
       globalX += temp.x;
       globalY += temp.y;
     }
@@ -59,9 +61,20 @@ const panZoom = (G) => {
     );
   };
 
+  const pan = (x, y, duration) => {
+    const chart = G.chart;
+    const t = d3.zoomTransform(chart.node());
+    const svg = d3.select(G.svgEl);
+    svg.transition().duration(duration).call(
+      G.zoom.transform,
+      d3.zoomIdentity.translate(t.x, t.y).scale(t.k).translate(x, y)
+    );
+  };
+
   return [
     { name: 'centerGraph', fn: centerGraph },
-    { name: 'moveTo', fn: moveTo }
+    { name: 'moveTo', fn: moveTo },
+    { name: 'panGraph', fn: pan }
   ];
 };
 
