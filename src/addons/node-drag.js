@@ -13,9 +13,10 @@ const nodeDrag = (G) => {
    */
   const enableDrag = (useAStarRouting) => {
     const chart = G.chart;
-    const data = flatten(G.layout);
+    let data = null;
 
     function dragStart(evt) {
+      data = flatten(G.layout);
       evt.sourceEvent.stopPropagation();
     }
 
@@ -100,6 +101,20 @@ const nodeDrag = (G) => {
         G.updateEdgePoints();
       }
       edgeTracker.clear();
+
+      data.nodes.forEach(node => {
+        G.oldNodeMap.set(node.id, {
+          x: node.x,
+          y: node.y,
+          width: node.width,
+          height: node.height
+        });
+      });
+      data.edges.forEach(edge => {
+        G.oldEdgeMap.set(edge.id, {
+          points: edge.points
+        });
+      });
     }
 
     // FIXME: Need to disable current listeners first before assigning new ones?

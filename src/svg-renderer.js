@@ -55,6 +55,9 @@ export default class SVGRenderer {
   constructor(options) {
     this.registry = new Map();
     this.parentMap = new Map();
+    this.oldNodeMap = new Map();
+    this.oldEdgeMap = new Map();
+
     this.options = options || {};
     this.options.renderMode = this.options.renderMode || 'basic';
     this.options.useEdgeControl = this.options.useEdgeControl || false;
@@ -136,7 +139,7 @@ export default class SVGRenderer {
         });
       }
     });
-    console.log(this.parentMap);
+    // console.log(this.parentMap);
   }
 
   getBoundary() {
@@ -182,6 +185,23 @@ export default class SVGRenderer {
     if (options.useMinimap === true) {
       this.renderMinimap();
     }
+
+    this.oldNodeMap.clear();
+    traverse(this.layout, (node) => {
+      this.oldNodeMap.set(node.id, {
+        x: node.x,
+        y: node.y,
+        width: node.width,
+        height: node.height
+      });
+      if (node.edges) {
+        node.edges.forEach(edge => {
+          this.oldEdgeMap.set(edge.id, {
+            points: edge.points
+          });
+        });
+      }
+    });
   }
 
   renderMinimap() {
@@ -261,11 +281,19 @@ export default class SVGRenderer {
    */
   renderEdgesDelta() {
     const chart = this.chart;
+    const oldEdgeMap = this.oldEdgeMap;
     let allEdges = [];
 
     traverse(this.layout, (node) => {
       if (node.edges && node.edges.length > 0) {
         allEdges = allEdges.concat(node.edges);
+      }
+    });
+
+    // Test stablization
+    allEdges.forEach(edge => {
+      if (oldEdgeMap.has(edge.id)) {
+        edge.points = oldEdgeMap.get(edge.id).points;
       }
     });
 
@@ -316,6 +344,7 @@ export default class SVGRenderer {
    */
   renderNodesDelta() {
     const chart = this.chart;
+    const oldNodeMap = this.oldNodeMap;
 
     const _recursiveBuild = (selection, childrenNodes) => {
       if (!childrenNodes) return;
@@ -340,6 +369,14 @@ export default class SVGRenderer {
           if (selection.select('.node-ui').size() === 0) {
             selection.append('g').classed('node-ui', true);
           }
+          if (oldNodeMap.has(d.id)) {
+            const oldPosition = oldNodeMap.get(d.id);
+            d.x = oldPosition.x;
+            d.y = oldPosition.y;
+            d.width = oldPosition.width;
+            d.height = oldPosition.height;
+          }
+
           selection.select('.node-ui').datum(d);
 
           // Allocate for the node's children
