@@ -287,7 +287,7 @@ export default class SVGRenderer {
   renderEdgesDelta() {
     const chart = this.chart;
     const oldEdgeMap = this.oldEdgeMap;
-    const useStableLayout = this.options.useStableLayout;
+    const useStableLayout = this.options.useStableLayout && flatten(this.layout).edges.length < chart.selectAll('.edge').size();
     let allEdges = [];
 
     traverse(this.layout, (node) => {
@@ -351,7 +351,7 @@ export default class SVGRenderer {
   renderNodesDelta() {
     const chart = this.chart;
     const oldNodeMap = this.oldNodeMap;
-    const useStableLayout = this.options.useStableLayout;
+    const useStableLayout = this.options.useStableLayout && (flatten(this.layout).nodes.length - 1) < chart.selectAll('.node').size();
 
     const _recursiveBuild = (selection, childrenNodes) => {
       if (!childrenNodes) return;
