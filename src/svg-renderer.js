@@ -156,6 +156,26 @@ export default class SVGRenderer {
    */
   async render() {
     const options = this.options;
+
+    // Cache previous layout, if any
+    this.oldNodeMap.clear();
+    this.oldEdgeMap.clear();
+    if (this.chart) {
+      this.chart.selectAll('.node').each(d => {
+        this.oldNodeMap.set(d.id, {
+          x: d.x,
+          y: d.y,
+          width: d.width,
+          height: d.height
+        });
+      });
+      this.chart.selectAll('.edge').each(d => {
+        this.oldEdgeMap.set(d.id, {
+          points: d.points
+        });
+      });
+    }
+
     if (!this.layout) {
       throw new Error('Layout data not set');
     }
@@ -185,23 +205,6 @@ export default class SVGRenderer {
     if (options.useMinimap === true) {
       this.renderMinimap();
     }
-
-    this.oldNodeMap.clear();
-    traverse(this.layout, (node) => {
-      this.oldNodeMap.set(node.id, {
-        x: node.x,
-        y: node.y,
-        width: node.width,
-        height: node.height
-      });
-      if (node.edges) {
-        node.edges.forEach(edge => {
-          this.oldEdgeMap.set(edge.id, {
-            points: edge.points
-          });
-        });
-      }
-    });
   }
 
   renderMinimap() {

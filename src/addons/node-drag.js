@@ -2,8 +2,6 @@ import * as d3 from 'd3';
 import { flatten } from '../utils';
 import { translate } from '../utils/svg-util';
 import { getAStarPath } from '../utils/a-star';
-// import { simplifyPath } from '../utils/simplify';
-
 
 const nodeDrag = (G) => {
   const edgeTracker = new Map();
@@ -101,20 +99,6 @@ const nodeDrag = (G) => {
         G.updateEdgePoints();
       }
       edgeTracker.clear();
-
-      data.nodes.forEach(node => {
-        G.oldNodeMap.set(node.id, {
-          x: node.x,
-          y: node.y,
-          width: node.width,
-          height: node.height
-        });
-      });
-      data.edges.forEach(edge => {
-        G.oldEdgeMap.set(edge.id, {
-          points: edge.points
-        });
-      });
     }
 
     // FIXME: Need to disable current listeners first before assigning new ones?
