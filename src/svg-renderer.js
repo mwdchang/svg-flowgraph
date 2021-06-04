@@ -67,6 +67,8 @@ export default class SVGRenderer {
     this.options.edgeControlOffsetType = this.options.edgeControlOffsetType || 'percentage';
     this.options.edgeControlOffset = this.options.edgeControlOffset || 0.66;
     this.options.useMinimap = this.options.useMinimap || false;
+    this.options.useStableLayout = this.options.useStableLayout || false;
+
     this.options.addons = this.options.addons || [];
 
     // Primitive add-on system
@@ -160,7 +162,7 @@ export default class SVGRenderer {
     // Cache previous layout, if any
     this.oldNodeMap.clear();
     this.oldEdgeMap.clear();
-    if (this.chart) {
+    if (this.chart && options.useStableLayout === true) {
       this.chart.selectAll('.node').each(d => {
         this.oldNodeMap.set(d.id, {
           x: d.x,
@@ -285,6 +287,7 @@ export default class SVGRenderer {
   renderEdgesDelta() {
     const chart = this.chart;
     const oldEdgeMap = this.oldEdgeMap;
+    const useStableLayout = this.options.useStableLayout;
     let allEdges = [];
 
     traverse(this.layout, (node) => {
@@ -295,7 +298,7 @@ export default class SVGRenderer {
 
     // Test stablization
     allEdges.forEach(edge => {
-      if (oldEdgeMap.has(edge.id)) {
+      if (useStableLayout === true && oldEdgeMap.has(edge.id)) {
         edge.points = oldEdgeMap.get(edge.id).points;
       }
     });
@@ -348,6 +351,7 @@ export default class SVGRenderer {
   renderNodesDelta() {
     const chart = this.chart;
     const oldNodeMap = this.oldNodeMap;
+    const useStableLayout = this.options.useStableLayout;
 
     const _recursiveBuild = (selection, childrenNodes) => {
       if (!childrenNodes) return;
@@ -372,7 +376,7 @@ export default class SVGRenderer {
           if (selection.select('.node-ui').size() === 0) {
             selection.append('g').classed('node-ui', true);
           }
-          if (oldNodeMap.has(d.id)) {
+          if (useStableLayout === true && oldNodeMap.has(d.id)) {
             const oldPosition = oldNodeMap.get(d.id);
             d.x = oldPosition.x;
             d.y = oldPosition.y;
