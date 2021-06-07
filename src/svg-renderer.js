@@ -55,6 +55,9 @@ export default class SVGRenderer {
   constructor(options) {
     this.registry = new Map();
     this.parentMap = new Map();
+    this.oldNodeMap = new Map();
+    this.oldEdgeMap = new Map();
+
     this.options = options || {};
     this.options.renderMode = this.options.renderMode || 'basic';
     this.options.useEdgeControl = this.options.useEdgeControl || false;
@@ -64,6 +67,8 @@ export default class SVGRenderer {
     this.options.edgeControlOffsetType = this.options.edgeControlOffsetType || 'percentage';
     this.options.edgeControlOffset = this.options.edgeControlOffset || 0.66;
     this.options.useMinimap = this.options.useMinimap || false;
+    this.options.useStableLayout = this.options.useStableLayout || false;
+
     this.options.addons = this.options.addons || [];
 
     // Primitive add-on system
@@ -136,7 +141,7 @@ export default class SVGRenderer {
         });
       }
     });
-    console.log(this.parentMap);
+    // console.log(this.parentMap);
   }
 
   getBoundary() {
@@ -153,6 +158,26 @@ export default class SVGRenderer {
    */
   async render() {
     const options = this.options;
+
+    // Cache previous layout, if any
+    this.oldNodeMap.clear();
+    this.oldEdgeMap.clear();
+    if (this.chart && options.useStableLayout === true) {
+      this.chart.selectAll('.node').each(d => {
+        this.oldNodeMap.set(d.id, {
+          x: d.x,
+          y: d.y,
+          width: d.width,
+          height: d.height
+        });
+      });
+      this.chart.selectAll('.edge').each(d => {
+        this.oldEdgeMap.set(d.id, {
+          points: d.points
+        });
+      });
+    }
+
     if (!this.layout) {
       throw new Error('Layout data not set');
     }
@@ -261,11 +286,20 @@ export default class SVGRenderer {
    */
   renderEdgesDelta() {
     const chart = this.chart;
+    const oldEdgeMap = this.oldEdgeMap;
+    const useStableLayout = this.options.useStableLayout && flatten(this.layout).edges.length < chart.selectAll('.edge').size();
     let allEdges = [];
 
     traverse(this.layout, (node) => {
       if (node.edges && node.edges.length > 0) {
         allEdges = allEdges.concat(node.edges);
+      }
+    });
+
+    // Test stablization
+    allEdges.forEach(edge => {
+      if (useStableLayout === true && oldEdgeMap.has(edge.id)) {
+        edge.points = oldEdgeMap.get(edge.id).points;
       }
     });
 
@@ -316,6 +350,8 @@ export default class SVGRenderer {
    */
   renderNodesDelta() {
     const chart = this.chart;
+    const oldNodeMap = this.oldNodeMap;
+    const useStableLayout = this.options.useStableLayout && (flatten(this.layout).nodes.length - 1) < chart.selectAll('.node').size();
 
     const _recursiveBuild = (selection, childrenNodes) => {
       if (!childrenNodes) return;
@@ -340,6 +376,14 @@ export default class SVGRenderer {
           if (selection.select('.node-ui').size() === 0) {
             selection.append('g').classed('node-ui', true);
           }
+          if (useStableLayout === true && oldNodeMap.has(d.id)) {
+            const oldPosition = oldNodeMap.get(d.id);
+            d.x = oldPosition.x;
+            d.y = oldPosition.y;
+            d.width = oldPosition.width;
+            d.height = oldPosition.height;
+          }
+
           selection.select('.node-ui').datum(d);
 
           // Allocate for the node's children

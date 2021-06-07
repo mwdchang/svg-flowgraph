@@ -8,9 +8,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js" integrity="sha512-psLUZfcgPmi012lcpVHkWoOqyztollwCGu4w/mXijFMK/YcdUdP06voJNVOJ7f/dUIlO2tGlDLuypRyXX2lcvQ==" crossorigin="anonymous"></script>
 <script src="./svg-flowgraph.min.js"></script>
 <title>Demo Graph</title>
+<style>
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+</style>
 </head>
 <body>
-  <div id="test" style="margin: 10px; width:50%; height: 450px; border: 1px solid #888; background: #FCFCFC" />
+  <div id="test" style="width:600px; height: 450px; border: 1px solid #888; background: #FCFCFC" />
 </body>
 <script>
 
@@ -18,6 +26,16 @@ const pathFn = d3.line() .x(d => d.x) .y(d => d.y);
 
 
 class TestRenderer extends myLibrary.SVGRenderer {
+  async render() {
+    await super.render();
+    d3.select(this.svgEl).select('.background-layer').selectAll('*').remove();
+    d3.select(this.svgEl).select('.background-layer')
+      .append('text')
+      .attr('y', 15)
+      .attr('x', this.chartSize.width - 10)
+      .attr('text-anchor', 'end')
+      .text('stable layout ' + this.options.useStableLayout);
+  }
 
   renderEdgeControl(selection) {
     selection.append('circle')
@@ -27,7 +45,7 @@ class TestRenderer extends myLibrary.SVGRenderer {
       .attr('fill', '#f80');
   }
 
-  renderNode(nodeSelection) {
+  renderNodeAdded(nodeSelection) {
     nodeSelection.each(function() {
       const selection = d3.select(this);
 
@@ -57,8 +75,13 @@ class TestRenderer extends myLibrary.SVGRenderer {
       .style('text-anchor', d => d.nodes ? 'left' : 'middle')
       .text(d => d.data.label);
   }
+  renderNodeUpdated(nodeSelection) {
+  }
+  renderNodeRemoved(nodeSelection) {
+    nodeSelection.remove();
+  }
 
-  renderEdge(edgeSelection) {
+  renderEdgeAdded(edgeSelection) {
     edgeSelection.append('path')
       .attr('d', d => pathFn(d.points))
       .style('fill', 'none')
@@ -74,6 +97,13 @@ class TestRenderer extends myLibrary.SVGRenderer {
         return `url(#start-${source}-${target})`;
       });
   }
+  renderEdgeUpdated(edgeSelection) {
+    edgeSelection.select('path').attr('d', d => pathFn(d.points));
+  }
+  renderEdgeRemoved(edgeSelection) {
+    edgeSelection.remove();
+  }
+
 }
 
 // An example Adapter using Dagre (Not compounded)
@@ -166,11 +196,7 @@ const graph = {
         { id: 'Sub 1', label: 'Sub 1' },
         { id: 'L2', label: 'L2',
           nodes: [
-            { id: 'L3', label: 'L3',
-              nodes: [
-                { id: 'L4', label: 'L4' }
-              ]
-            }
+            { id: 'L4', label: 'L4' }
           ]
         }
       ]
@@ -185,6 +211,30 @@ const graph = {
   ]
 };
 
+const graph2 = {
+  id: 'container',
+  nodes: [
+    { id: 'Node A', label: 'Node A' },
+    { id: 'Node B', label: 'Node B' },
+    { id: 'Node C', label: 'Node C' },
+    { id: 'L1', label: 'L1',
+      nodes: [
+        { id: 'L2', label: 'L2',
+          nodes: [
+            { id: 'L4', label: 'L4' }
+          ]
+        }
+      ]
+    }
+  ],
+  edges: [
+    { id: 'Edge 1', source: 'Node A', target: 'Node B' },
+    { id: 'Edge 3', source: 'L4', target: 'Node A' },
+    { id: 'Edge 4', source: 'L4', target: 'L4' },
+  ]
+};
+
+
 const group = myLibrary.group;
 const nodeSize = myLibrary.nodeSize;
 const nodeDrag = myLibrary.nodeDrag;
@@ -196,9 +246,10 @@ const traverse = myLibrary.traverse;
 const renderer = new TestRenderer({
   el: document.getElementById('test'),
   adapter: new DagreAdapter({ nodeWidth: 100, nodeHeight: 50 }),
-  renderMode: 'basic',
+  renderMode: 'delta',
   useEdgeControl: true,
   useMinimap: true,
+  useStableLayout: true,
   addons: [ group, nodeSize, highlight, nodeDrag, expandCollapse, panZoom ]
 });
 

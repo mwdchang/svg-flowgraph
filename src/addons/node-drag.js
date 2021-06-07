@@ -2,8 +2,6 @@ import * as d3 from 'd3';
 import { flatten } from '../utils';
 import { translate } from '../utils/svg-util';
 import { getAStarPath } from '../utils/a-star';
-// import { simplifyPath } from '../utils/simplify';
-
 
 const nodeDrag = (G) => {
   const edgeTracker = new Map();
@@ -13,9 +11,10 @@ const nodeDrag = (G) => {
    */
   const enableDrag = (useAStarRouting) => {
     const chart = G.chart;
-    const data = flatten(G.layout);
+    let data = null;
 
     function dragStart(evt) {
+      data = flatten(G.layout);
       evt.sourceEvent.stopPropagation();
     }
 
