@@ -153,6 +153,25 @@ export default class SVGRenderer {
     return { x1, y1, x2, y2 };
   }
 
+
+  /**
+   * FIXME: Just a simple count, need to handle hierarchies
+   * Try to keep layout stable across destructive actions where nodes/edges
+   * counts will be smaller than before
+   */
+  _canLeverageStableLayout() {
+    const chart = this.chart;
+    const options = this.options;
+    const flattened = flatten(this.layout);
+    const numNodes = flattened.nodes.length - 1; // Exclude super parent
+    const numEdges = flattened.edges;
+
+    return options.useStableLayout &&
+      numNodes <= chart.selectAll('.node').size() &&
+      numEdges <= chart.selectAll('.edge').size();
+  }
+
+
   /**
    * Renders the graph
    */
@@ -287,7 +306,7 @@ export default class SVGRenderer {
   renderEdgesDelta() {
     const chart = this.chart;
     const oldEdgeMap = this.oldEdgeMap;
-    const useStableLayout = this.options.useStableLayout && flatten(this.layout).edges.length < chart.selectAll('.edge').size();
+    const useStableLayout = this._canLeverageStableLayout();
     let allEdges = [];
 
     traverse(this.layout, (node) => {
@@ -351,7 +370,7 @@ export default class SVGRenderer {
   renderNodesDelta() {
     const chart = this.chart;
     const oldNodeMap = this.oldNodeMap;
-    const useStableLayout = this.options.useStableLayout && (flatten(this.layout).nodes.length - 1) < chart.selectAll('.node').size();
+    const useStableLayout = this._canLeverageStableLayout();
 
     const _recursiveBuild = (selection, childrenNodes) => {
       if (!childrenNodes) return;
