@@ -25,7 +25,15 @@ export default [
       nodeResolve(),
       babel({
         babelrc: false,
-        presets: [['@babel/preset-env', { modules: false }]]
+        presets: [
+          [
+            '@babel/preset-env',
+            {
+              targets: { node: 12 },
+              modules: false
+            }
+          ]
+        ]
       }),
       commonjs(),
       terser()
