@@ -96,6 +96,7 @@ export default class SVGRenderer {
 
     // Internal trackers
     this.zoom = null;
+    this.canLeverageStableLayout = false;
   }
 
   setCallback(name, fn) {
@@ -164,11 +165,8 @@ export default class SVGRenderer {
     const options = this.options;
     const flattened = flatten(this.layout);
     const numNodes = flattened.nodes.length - 1; // Exclude super parent
-    const numEdges = flattened.edges;
 
-    return options.useStableLayout &&
-      numNodes <= chart.selectAll('.node').size() &&
-      numEdges <= chart.selectAll('.edge').size();
+    return options.useStableLayout && numNodes <= chart.selectAll('.node').size();
   }
 
 
@@ -207,6 +205,8 @@ export default class SVGRenderer {
     if (!this.chart) {
       this.chart = this._createChart();
     }
+
+    this.canLeverageStableLayout = this._canLeverageStableLayout();
 
     this.buildDefs();
 
@@ -306,7 +306,7 @@ export default class SVGRenderer {
   renderEdgesDelta() {
     const chart = this.chart;
     const oldEdgeMap = this.oldEdgeMap;
-    const useStableLayout = this._canLeverageStableLayout();
+    const useStableLayout = this.canLeverageStableLayout;
     let allEdges = [];
 
     traverse(this.layout, (node) => {
@@ -336,9 +336,9 @@ export default class SVGRenderer {
       d3.select(this).selectAll('.edge-path').datum(d);
     });
 
-    chart.selectAll('.edge').filter(d => d.state === 'new').call(this.renderEdgeAdded).call(this.enableEdgeInteraction, this);
-    chart.selectAll('.edge').filter(d => d.state === 'updated').call(this.renderEdgeUpdated);
-    chart.selectAll('.edge').filter(d => d.state === 'removed').call(this.renderEdgeRemoved);
+    chart.selectAll('.edge').filter(d => d.state === 'new').call(this.renderEdgeAdded, this).call(this.enableEdgeInteraction, this);
+    chart.selectAll('.edge').filter(d => d.state === 'updated').call(this.renderEdgeUpdated, this);
+    chart.selectAll('.edge').filter(d => d.state === 'removed').call(this.renderEdgeRemoved, this);
   }
 
   renderEdges() {
@@ -370,7 +370,7 @@ export default class SVGRenderer {
   renderNodesDelta() {
     const chart = this.chart;
     const oldNodeMap = this.oldNodeMap;
-    const useStableLayout = this._canLeverageStableLayout();
+    const useStableLayout = this.canLeverageStableLayout;
 
     const _recursiveBuild = (selection, childrenNodes) => {
       if (!childrenNodes) return;
@@ -417,9 +417,9 @@ export default class SVGRenderer {
     };
     _recursiveBuild(chart, this.layout.nodes);
 
-    chart.selectAll('.node-ui').filter(d => d.state === 'new').call(this.renderNodeAdded).call(this.enableNodeInteraction, this);
-    chart.selectAll('.node-ui').filter(d => d.state === 'updated').call(this.renderNodeUpdated);
-    chart.selectAll('.node-ui').filter(d => d.state === 'removed').call(this.renderNodeRemoved);
+    chart.selectAll('.node-ui').filter(d => d.state === 'new').call(this.renderNodeAdded, this).call(this.enableNodeInteraction, this);
+    chart.selectAll('.node-ui').filter(d => d.state === 'updated').call(this.renderNodeUpdated, this);
+    chart.selectAll('.node-ui').filter(d => d.state === 'removed').call(this.renderNodeRemoved, this);
   }
 
   /**

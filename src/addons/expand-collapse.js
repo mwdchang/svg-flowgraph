@@ -63,7 +63,7 @@ const expandCollapse = (G) => {
         }
       }
     });
-    G.render();
+    // G.render();
   };
 
   /**
@@ -101,7 +101,7 @@ const expandCollapse = (G) => {
       }
     });
     collapseTracker.delete(nodeId);
-    G.render();
+    // G.render();
   };
 
   return [
