@@ -12,7 +12,7 @@ const expandCollapse = (G) => {
    *
    * @param {string} nodeId - node identifier
    */
-  const collapse = async (nodeId) => {
+  const collapse = (nodeId) => {
     // 1) Grab all nodes
     const node = G.chart.selectAll('.node').filter(d => d.id === nodeId);
     const childrenNodeIds = node.selectAll('.node').data().map(d => d.id);
@@ -63,7 +63,6 @@ const expandCollapse = (G) => {
         }
       }
     });
-    // G.render();
   };
 
   /**
@@ -71,7 +70,7 @@ const expandCollapse = (G) => {
    *
    * @param {string} nodeId - node identifier
    */
-  const expand = async (nodeId) => {
+  const expand = (nodeId) => {
     const node = G.chart.selectAll('.node').filter(d => d.id === nodeId);
     const entry = collapseTracker.get(nodeId);
 
@@ -101,7 +100,6 @@ const expandCollapse = (G) => {
       }
     });
     collapseTracker.delete(nodeId);
-    // G.render();
   };
 
   return [
