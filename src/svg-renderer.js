@@ -606,6 +606,9 @@ export default class SVGRenderer {
     }
     function zoomEnd() {
       if (!self.layout) return;
+
+      self.zoomTransformObject = d3.zoomTransform(chart.node());
+
       if (self.options.useMinimap === false || self.options.useZoom === false) return;
       const { x1, y1, x2, y2 } = self.getBoundary();
       const minimap = d3.select(self.svgEl).select('.foreground-layer').select('.minimap');
@@ -620,7 +623,6 @@ export default class SVGRenderer {
         .attr('stroke-width', 1)
         .attr('fill', '#369')
         .attr('fill-opacity', 0.1);
-      self.zoomTransformObject = d3.zoomTransform(chart.node());
     }
 
     const minZoom = 0.05;
@@ -632,7 +634,7 @@ export default class SVGRenderer {
     let zoomX = (-(this.layout.width * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel;
     let zoomY = (-(this.layout.height * zoomLevel * 0.5) + 0.5 * this.chartSize.height) / zoomLevel;
 
-    if (this.options.useStableZoomPan === true) {
+    if (this.options.useStableZoomPan === true && this.zoomTransformObject !== null) {
       zoomLevel = this.zoomTransformObject.k;
       zoomX = this.zoomTransformObject.x / zoomLevel;
       zoomY = this.zoomTransformObject.y / zoomLevel;
