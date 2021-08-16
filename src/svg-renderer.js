@@ -68,6 +68,7 @@ export default class SVGRenderer {
     this.options.edgeControlOffset = this.options.edgeControlOffset || 0.66;
     this.options.useMinimap = this.options.useMinimap || false;
     this.options.useStableLayout = this.options.useStableLayout || false;
+    this.options.useStableZoomPan = this.options.useStableZoomPan || false;
 
     this.options.addons = this.options.addons || [];
 
@@ -96,6 +97,7 @@ export default class SVGRenderer {
 
     // Internal trackers
     this.zoom = null;
+    this.zoomTransformObject = null;
     this.canLeverageStableLayout = false;
   }
 
@@ -618,20 +620,26 @@ export default class SVGRenderer {
         .attr('stroke-width', 1)
         .attr('fill', '#369')
         .attr('fill-opacity', 0.1);
+      self.zoomTransformObject = d3.zoomTransform(chart.node());
     }
 
     const minZoom = 0.05;
     const maxZoom = Math.max(2, Math.floor(this.layout.width / this.chartSize.width));
-    const zoomLevel = Math.min(1, 1 / (this.layout.height / this.chartSize.height));
+    let zoomLevel = Math.min(1, 1 / (this.layout.height / this.chartSize.height));
     this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
     svg.call(this.zoom).on('dblclick.zoom', null);
 
+    let zoomX = (-(this.layout.width * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel;
+    let zoomY = (-(this.layout.height * zoomLevel * 0.5) + 0.5 * this.chartSize.height) / zoomLevel;
+
+    if (this.options.useStableZoomPan === true) {
+      zoomLevel = this.zoomTransformObject.k;
+      zoomX = this.zoomTransformObject.x / zoomLevel;
+      zoomY = this.zoomTransformObject.y / zoomLevel;
+    }
     svg.call(
       this.zoom.transform,
-      d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(
-        (-(this.layout.width * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel,
-        (-(this.layout.height * zoomLevel * 0.5) + 0.5 * this.chartSize.height) / zoomLevel
-      )
+      d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(zoomX, zoomY)
     );
   }
 
