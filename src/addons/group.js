@@ -48,7 +48,7 @@ const group = (G) => {
   const ungroup = (groupName) => {
     const chart = G.chart;
     const groupData = chart.selectAll('.node').filter(d => d.id === groupName).data()[0];
-    const parentData = groupData.parent;
+    const parentData = G.parentMap.get(groupName);
 
     // 0) Remove group
     _.remove(parentData.nodes, n => n.id === groupName);
