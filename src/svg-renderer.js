@@ -370,7 +370,7 @@ export default class SVGRenderer {
    * removed graph elements.
    */
   renderNodesDelta() {
-    const chart = this.chart;
+    const chart = this.chart.append('g');
     const oldNodeMap = this.oldNodeMap;
     const useStableLayout = this.canLeverageStableLayout;
 
@@ -428,7 +428,7 @@ export default class SVGRenderer {
    * Simple basic renderNodes, just wipe out all nodes and redraw
    */
   renderNodes() {
-    const chart = this.chart;
+    const chart = this.chart.append('g');
     chart.selectAll('.node').remove();
 
     const _recursiveBuild = (selection, childrenNodes) => {
@@ -531,7 +531,12 @@ export default class SVGRenderer {
         }
       });
 
-      node.on('mouseenter', function(evt) {
+      node.on('mouseenter', function(evt, x, y) {
+        // Put the active element on top
+        const nodeElement = node.node().parentNode;
+        const nodesContainer = nodeElement.parentNode;
+        nodesContainer.appendChild(nodeElement);
+
         evt.stopPropagation();
         if (registry.has('nodeMouseEnter')) { registry.get('nodeMouseEnter')(evt, d3.select(this), renderer); }
       });
