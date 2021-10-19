@@ -3,15 +3,22 @@ import { flatten } from '../utils';
 import { translate } from '../utils/svg-util';
 import { getAStarPath } from '../utils/a-star';
 
+const NOOP = () => {};
+
 const nodeDrag = (G) => {
   const edgeTracker = new Map();
 
   /**
    * Enable node dragging, this will recalculate edge end points as well
+   *
+   * @param {boolean} useAStarRouting - whether to reroute using AStar
    */
-  const enableDrag = (useAStarRouting) => {
+  const enableDrag = (useAStarRouting, dragMoveCallback, dragEndCallback) => {
     const chart = G.chart;
     let data = null;
+
+    if (!dragMoveCallback) dragMoveCallback = NOOP;
+    if (!dragEndCallback) dragEndCallback = NOOP;
 
     function dragStart(evt) {
       data = flatten(G.layout);
@@ -30,6 +37,7 @@ const nodeDrag = (G) => {
       const dy = evt.dy;
 
       // Short circuit
+      // FIXME: Need to relax this for merging
       if (parentData) {
         if (node.datum().x + node.datum().width + dx > (parentData.width) || node.datum().x + dx < 0) {
           return;
@@ -67,9 +75,12 @@ const nodeDrag = (G) => {
 
       // update edges based on new source/target coords
       G.updateEdgePoints();
+
+      dragMoveCallback(node, G);
     }
 
     function dragEnd() {
+      const node = d3.select(this);
       const collisionFn = (p) => {
         const buffer = 10;
         for (let i = 0; i < data.nodes.length; i++) {
@@ -99,6 +110,8 @@ const nodeDrag = (G) => {
         G.updateEdgePoints();
       }
       edgeTracker.clear();
+
+      dragEndCallback(node, G);
     }
 
     // FIXME: Need to disable current listeners first before assigning new ones?
