@@ -370,7 +370,7 @@ export default class SVGRenderer {
    * removed graph elements.
    */
   renderNodesDelta() {
-    const chart = this.chart.append('g');
+    const chart = this.chart.select('.nodes-layer');
     const oldNodeMap = this.oldNodeMap;
     const useStableLayout = this.canLeverageStableLayout;
 
@@ -428,7 +428,7 @@ export default class SVGRenderer {
    * Simple basic renderNodes, just wipe out all nodes and redraw
    */
   renderNodes() {
-    const chart = this.chart.append('g');
+    const chart = this.chart.select('.nodes-layer');
     chart.selectAll('.node').remove();
 
     const _recursiveBuild = (selection, childrenNodes) => {
@@ -501,6 +501,9 @@ export default class SVGRenderer {
 
     // Add chart group
     const chart = treatedSVG.append('g').classed('data-layer', true);
+
+    // Add a dedicated group for nodes
+    chart.append('g').classed('nodes-layer', true);
 
     // Add a foreground layer
     const foreground = treatedSVG.append('g').classed('foreground-layer', true); // eslint-disable-line
