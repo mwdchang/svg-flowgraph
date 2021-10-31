@@ -1,5 +1,7 @@
 import * as d3 from 'd3';
 import { BasicRenderer } from '../../src/core/basic-renderer';
+// import { panGraph } from '../../src/actions/pan-graph';
+// import { moveTo } from '../../src/fn/move-to';
 import { IGraph, INode, IEdge } from '../../src/types';
 
 interface NodeData {
@@ -18,6 +20,10 @@ export const pathFn = d3.line<{ x: number, y: number}>()
   .y(d => d.y);
 
 class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
+  constructor(options: any) {
+    super(options);
+  }
+
   renderNodes(selection: D3SelectionINode<NodeData>) {
     selection.append('rect')
       .attr('width', d => d.width)
@@ -45,11 +51,18 @@ const renderer = new SampleRenderer({
 });
 renderer.setCallback('nodeClick', () => { console.log('node click'); });
 renderer.setCallback('nodeDblClick', () => { console.log('node double click'); });
+renderer.setCallback('nodeMouseEnter', (_evt: any, selection: D3SelectionINode<NodeData>) => {
+  selection.select('rect').style('fill', '#f80');
+});
+renderer.setCallback('nodeMouseLeave', (_evt: any, selection: D3SelectionINode<NodeData>) => {
+  selection.select('rect').style('fill', '#eee');
+});
+
 
 // Graph data
 const g:IGraph<NodeData, EdgeData> = {
-  width: 500,
-  height: 500,
+  width: 400,
+  height: 400,
   nodes: [
     {
       id: '123',
@@ -91,6 +104,7 @@ const g:IGraph<NodeData, EdgeData> = {
 const run = async () => {
   await renderer.setData(g);
   await renderer.render();
+  // moveTo(renderer, '123', 2000);
 };
 
 run();

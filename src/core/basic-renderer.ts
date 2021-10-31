@@ -28,7 +28,7 @@ export abstract class BasicRenderer<V, E> extends Renderer<V, E> {
       });
     };
     _recursiveBuild(chart, this.graph.nodes);
-    chart.selectAll('.node-ui').call(this.renderNodes);
+    this.renderNodes(chart.selectAll('.node-ui') as D3SelectionINode<V>);
   }
 
   /**
@@ -45,7 +45,8 @@ export abstract class BasicRenderer<V, E> extends Renderer<V, E> {
       .enter()
       .append('g')
       .classed('edge', true);
-    chart.selectAll('.edge').call(this.renderEdges);
+
+    this.renderEdges(chart.selectAll('.edge') as D3SelectionIEdge<E>);
   }
 
   abstract renderNodes(selection: D3SelectionINode<V>): void;

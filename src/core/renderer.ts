@@ -5,8 +5,9 @@ import { pointOnPath, translate } from '../utils/svg-util';
 
 import {
   INode, IEdge, IGraph, IRect, IPoint,
-  D3Selection, D3SelectionIEdge
+  D3Selection, D3SelectionIEdge, D3SelectionINode
 } from '../types';
+import {D3DragEvent} from 'd3';
 
 interface Options {
   el?: HTMLDivElement
@@ -20,6 +21,10 @@ interface Options {
   useStableLayout?: boolean
   useStableZoomPan?: boolean
 }
+
+export const pathFn = d3.line<{ x: number, y: number}>()
+  .x(d => d.x)
+  .y(d => d.y);
 
 export abstract class Renderer<V, E> {
   options: Options;
@@ -142,7 +147,28 @@ export abstract class Renderer<V, E> {
     this.chart.selectAll('.edge').call(this.enableEdgeInteraction, this);
     this.chart.selectAll('.node-ui').call(this.enableNodeInteraction, this);
     this.enableSVGInteraction();
+
+    // Enable dragging nodes
+    this.enableNodeDragging();
   }
+
+  updateEdgePoints(): void {
+    const chart = this.chart;
+    // const options = this.options;
+    chart.selectAll('.edge').selectAll('path').attr('d', (d: IEdge<E>) => {
+      return pathFn(d.points);
+    });
+    // FIXME
+    // if (options.useEdgeControl) {
+    //   chart.selectAll('.edge').each(function() {
+    //     const pathNode = d3.select(this).select('path').node();
+    //     const controlPoint = self.calculateEdgeControlPlacement(pathNode);
+    //     d3.select(this).select('.edge-control')
+    //       .attr('transform', translate(controlPoint.x, controlPoint.y));
+    //   });
+    // }
+  }
+
 
   /**
    * Edge interactions
@@ -317,6 +343,66 @@ export abstract class Renderer<V, E> {
     const numNodes = flattened.nodes.length - 1; // Exclude super parent
     return options.useStableLayout && numNodes <= chart.selectAll('.node').size();
   }
+
+  enableNodeDragging(): void {
+    console.log(this);
+    const edges = this.graph.edges;
+    const updateEdgePoints = this.updateEdgePoints.bind(this);
+    
+    let node: D3SelectionINode<V> = null;
+    let nodeDraggingIds: string[] = [];
+
+    function nodeDragStart(evt: any): void  {
+      console.log('node-drag start', this);
+      evt.sourceEvent.stopPropagation();
+
+      node = d3.select(this) as D3SelectionINode<V>;
+      const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
+      nodeDraggingIds = [node.datum().id, ...childrenNodes.data().map(d => d.id)];
+    }
+
+    function nodeDragMove(evt: any) {
+      console.log('node-drag move');
+      const dx = evt.dx;
+      const dy = evt.dy;
+
+      node.datum().x += dx;
+      node.datum().y += dy;
+      node.attr('transform', translate(node.datum().x, node.datum().y));
+
+
+      for (let i = 0; i < edges.length; i++) {
+        const edge = edges[i];
+        const source = edge.source;
+        const target = edge.target;
+
+        if (nodeDraggingIds.includes(source) && nodeDraggingIds.includes(target)) {
+          edge.points.forEach(p => {
+            p.x += dx;
+            p.y += dy;
+          });
+        } else if (nodeDraggingIds.includes(source)) {
+          edge.points[0].x += dx;
+          edge.points[0].y += dy;
+        } else if (nodeDraggingIds.includes(target)) {
+          edge.points[edge.points.length - 1].x += dx;
+          edge.points[edge.points.length - 1].y += dy;
+        }
+      }
+      updateEdgePoints();
+    }
+
+    function nodeDragEnd(): void {
+      console.log('node-drag end');
+    }
+
+    const nodeDrag = d3.drag()
+      .on('start', nodeDragStart)
+      .on('end', nodeDragEnd)
+      .on('drag', nodeDragMove);
+    this.chart.selectAll('.node').call(nodeDrag);
+  }
+
 
   // Need to implement or to overide
   renderEdgeControls(selection: D3SelectionIEdge<E>): void {

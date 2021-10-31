@@ -57,9 +57,9 @@ export abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
     };
     _recursiveBuild(chart, this.graph.nodes);
 
-    chart.selectAll('.node-ui').filter((d: INode<V>) => d.state === 'new').call(this.renderNodesAdded, this);
-    chart.selectAll('.node-ui').filter((d: INode<V>) => d.state === 'updated').call(this.renderNodesUpdated, this);
-    chart.selectAll('.node-ui').filter((d: INode<V>) => d.state === 'removed').call(this.renderNodesRemoved, this);
+    this.renderNodesAdded(chart.selectAll('.node-ui').filter((d: INode<V>) => d.state === 'new') as D3SelectionINode<V>);
+    this.renderNodesUpdated(chart.selectAll('.node-ui').filter((d: INode<V>) => d.state === 'updated') as D3SelectionINode<V>);
+    this.renderNodesRemoved(chart.selectAll('.node-ui').filter((d: INode<V>) => d.state === 'removed') as D3SelectionINode<V>);
   }
 
   setupEdges(): void {
@@ -91,9 +91,9 @@ export abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
       d3.select(this).selectAll('.edge-path').datum(d);
     });
 
-    chart.selectAll('.edge').filter((d: IEdge<E>) => d.state === 'new').call(this.renderEdgesAdded, this);
-    chart.selectAll('.edge').filter((d: IEdge<E>) => d.state === 'updated').call(this.renderEdgesUpdated, this);
-    chart.selectAll('.edge').filter((d: IEdge<E>) => d.state === 'removed').call(this.renderEdgesRemoved, this);
+    this.renderEdgesAdded(chart.selectAll('.edge').filter((d: IEdge<E>) => d.state === 'new') as D3SelectionIEdge<E>);
+    this.renderEdgesUpdated(chart.selectAll('.edge').filter((d: IEdge<E>) => d.state === 'updated') as D3SelectionIEdge<E>);
+    this.renderEdgesRemoved(chart.selectAll('.edge').filter((d: IEdge<E>) => d.state === 'removed') as D3SelectionIEdge<E>);
   }
 
   abstract renderNodesAdded(selection: D3SelectionINode<V>): void;
@@ -104,4 +104,3 @@ export abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
   abstract renderEdgesUpdated(selection: D3SelectionIEdge<E>): void;
   abstract renderEdgesRemoved(selection: D3SelectionIEdge<E>): void;
 }
-
