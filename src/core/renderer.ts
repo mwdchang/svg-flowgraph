@@ -146,19 +146,22 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
   updateEdgePoints(): void {
     const chart = this.chart;
-    // const options = this.options;
+    const options = this.options;
     chart.selectAll('.edge').selectAll('path').attr('d', (d: IEdge<E>) => {
       return pathFn(d.points);
     });
-    // FIXME
-    // if (options.useEdgeControl) {
-    //   chart.selectAll('.edge').each(function() {
-    //     const pathNode = d3.select(this).select('path').node();
-    //     const controlPoint = self.calculateEdgeControlPlacement(pathNode);
-    //     d3.select(this).select('.edge-control')
-    //       .attr('transform', translate(controlPoint.x, controlPoint.y));
-    //   });
-    // }
+
+    if (options.useEdgeControl) {
+      chart.selectAll('.edge').each(function() {
+        const pathNode = d3.select(this).select('path').node() as SVGPathElement;
+        const controlPoint = pointOnPath(
+          pathNode,
+          options.edgeControlOffsetType,
+          options.edgeControlOffset);
+        d3.select(this).select('.edge-control')
+          .attr('transform', translate(controlPoint.x, controlPoint.y));
+      });
+    }
   }
 
 
