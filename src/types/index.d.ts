@@ -1,3 +1,6 @@
+export type EventCallback = (type: string | symbol, ...args: any[]) => void;
+export type EventName = string | symbol;
+
 export interface IRect {
   x: number
   y: number
@@ -35,7 +38,6 @@ export interface IGraph<V, E> {
 }
 
 
-type D3Selection = d3.Selection<d3.BaseType, any, null, any>;
-type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
-type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
-
+export type D3Selection = d3.Selection<d3.BaseType, any, null, any>;
+export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
+export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;

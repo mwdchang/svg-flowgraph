@@ -49,13 +49,17 @@ document.body.append(div);
 const renderer = new SampleRenderer({
   el: div
 });
-renderer.setCallback('nodeClick', () => { console.log('node click'); });
-renderer.setCallback('nodeDblClick', () => { console.log('node double click'); });
-renderer.setCallback('nodeMouseEnter', (_evt: any, selection: D3SelectionINode<NodeData>) => {
+renderer.on('node-click', () => { console.log('node click'); });
+renderer.on('node-dbl-click', () => { console.log('node double click'); });
+renderer.on('node-mouse-enter', (_eventName: string, _evt: any, selection: D3SelectionINode<NodeData>) => {
   selection.select('rect').style('fill', '#f80');
 });
-renderer.setCallback('nodeMouseLeave', (_evt: any, selection: D3SelectionINode<NodeData>) => {
+renderer.on('node-mouse-leave', (_eventName: string, _evt: any, selection: D3SelectionINode<NodeData>) => {
   selection.select('rect').style('fill', '#eee');
+});
+
+renderer.on('hello', (evtName: string, t: string) => {
+  console.log(evtName, t);
 });
 
 

@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { EventEmitter } from './event-emitter';
 import { removeChildren } from '../utils/dom-util';
 import { traverseGraph, flattenGraph } from './traverse';
 import { pointOnPath, translate } from '../utils/svg-util';
@@ -7,7 +8,6 @@ import {
   INode, IEdge, IGraph, IRect, IPoint,
   D3Selection, D3SelectionIEdge, D3SelectionINode
 } from '../types';
-import {D3DragEvent} from 'd3';
 
 interface Options {
   el?: HTMLDivElement
@@ -26,9 +26,8 @@ export const pathFn = d3.line<{ x: number, y: number}>()
   .x(d => d.x)
   .y(d => d.y);
 
-export abstract class Renderer<V, E> {
+export abstract class Renderer<V, E> extends EventEmitter {
   options: Options;
-  registry: Map<string, any> = new Map(); // FIXME better type?
   parentMap: Map<string, INode<V>>;
   oldNodeMap: Map<string, IRect> = new Map();
   oldEdgeMap: Map<string, { points: IPoint[] }> = new Map();
@@ -45,6 +44,7 @@ export abstract class Renderer<V, E> {
   zoomTransformObject: d3.ZoomTransform = null;
 
   constructor(options: Options) {
+    super(); // Event emitter
     this.parentMap = new Map();
     this.options = options;
 
@@ -61,14 +61,6 @@ export abstract class Renderer<V, E> {
     this.svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     this.svgEl.style.userSelect = 'none';
     removeChildren(element).appendChild(this.svgEl);
-  }
-
-  setCallback(name: string, fn: any): void {
-    this.registry.set(name, fn);
-  }
-
-  unsetCallback(name: string): void {
-    this.registry.delete(name);
   }
 
   async setData(graph: IGraph<V, E>): Promise<void> {
@@ -146,7 +138,7 @@ export abstract class Renderer<V, E> {
     // Enable various interactions
     this.chart.selectAll('.edge').call(this.enableEdgeInteraction, this);
     this.chart.selectAll('.node-ui').call(this.enableNodeInteraction, this);
-    this.enableSVGInteraction();
+    this.enableSVGInteraction(this);
 
     // Enable dragging nodes
     this.enableNodeDragging();
@@ -176,21 +168,21 @@ export abstract class Renderer<V, E> {
   enableEdgeInteraction(selection: D3Selection, renderer: Renderer<V, E>): void {
     selection.each((_, edgeIndex: number, edges: SVGGElement[]) => {
       const edge = d3.select(edges[edgeIndex]);
-      const registry = renderer.registry;
+      const emit = renderer.emit.bind(renderer);
 
       edge.on('click', function(evt) {
         evt.stopPropagation();
-        if (registry.has('edgeClick')) { registry.get('edgeClick')(evt, d3.select(this), renderer); }
+        emit('edge-click', evt, d3.select(this), renderer);
       });
 
       edge.on('mouseenter', function(evt) {
         evt.stopPropagation();
-        if (registry.has('edgeMouseEnter')) { registry.get('edgeMouseEnter')(evt, d3.select(this), renderer); }
+        emit('edge-mouse-enter', evt, d3.select(this), renderer);
       });
 
       edge.on('mouseleave', function(evt) {
         evt.stopPropagation();
-        if (registry.has('edgeMouseLeave')) { registry.get('edgeMouseLeave')(evt, d3.select(this), renderer); }
+        emit('edge-mouse-leave', evt, d3.select(this), renderer);
       });
     });
   }
@@ -201,25 +193,21 @@ export abstract class Renderer<V, E> {
   enableNodeInteraction(selection: D3Selection, renderer: Renderer<V, E>): void {
     selection.each((_, nodeIndex, nodes) => {
       const node = d3.select(nodes[nodeIndex]);
-      const registry = renderer.registry;
+      const emit = renderer.emit.bind(renderer);
 
       node.on('dblclick', function(evt) {
         evt.stopPropagation();
-        if (registry.has('nodeDblClick')) {
-          window.clearTimeout(renderer.clickTimer);
-          registry.get('nodeDblClick')(evt, d3.select(this), renderer);
-        }
+        window.clearTimeout(renderer.clickTimer);
+        emit('node-dbl-click', evt, d3.select(this), renderer);
       });
 
       node.on('click', function(evt) {
         evt.stopPropagation();
-        if (registry.has('nodeClick')) {
-          const e = d3.select(this);
-          window.clearTimeout(renderer.clickTimer);
-          renderer.clickTimer = window.setTimeout(() => {
-            registry.get('nodeClick')(evt, e, renderer);
-          }, 200);
-        }
+        const e = d3.select(this);
+        window.clearTimeout(renderer.clickTimer);
+        renderer.clickTimer = window.setTimeout(() => {
+          emit('node-click', evt, e, renderer);
+        }, 200);
       });
 
       node.on('mouseenter', function(evt) {
@@ -229,12 +217,12 @@ export abstract class Renderer<V, E> {
         nodesContainer.appendChild(nodeElement);
 
         evt.stopPropagation();
-        if (registry.has('nodeMouseEnter')) { registry.get('nodeMouseEnter')(evt, d3.select(this), renderer); }
+        emit('node-mouse-enter', evt, d3.select(this), renderer);
       });
 
       node.on('mouseleave', function(evt) {
         evt.stopPropagation();
-        if (registry.has('nodeMouseLeave')) { registry.get('nodeMouseLeave')(evt, d3.select(this), renderer); }
+        emit('node-mouse-leave', evt, d3.select(this), renderer);
       });
     });
   }
@@ -242,32 +230,28 @@ export abstract class Renderer<V, E> {
   /**
    * Setup background/canvas interactions
   */
-  enableSVGInteraction(): void {
+  enableSVGInteraction(renderer: Renderer<V, E>): void {
     const chart = this.chart;
-    const registry = this.registry;
+    const emit = renderer.emit.bind(renderer);
     const svg = d3.select(this.svgEl);
     this.clickTimer = null;
 
     svg.on('click', function (evt) {
       evt.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.pointer(evt));
-      if (registry.has('backgroundClick')) {
-        registry.get('backgroundClick')(evt, d3.select(this), self, {
-          x: pointerCoords[0],
-          y: pointerCoords[1]
-        });
-      }
+      emit('background-click', evt, d3.select(this), renderer, {
+        x: pointerCoords[0],
+        y: pointerCoords[1]
+      });
     });
 
     svg.on('dblclick', function (evt) {
       evt.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.pointer(evt));
-      if (registry.has('backgroundDblClick')) {
-        registry.get('backgroundDblClick')(evt, d3.select(this), self, {
-          x: pointerCoords[0],
-          y: pointerCoords[1]
-        });
-      }
+      emit('dbl-click', evt, d3.select(this), renderer, {
+        x: pointerCoords[0],
+        y: pointerCoords[1]
+      });
     });
 
     // Zoom control
@@ -345,7 +329,6 @@ export abstract class Renderer<V, E> {
   }
 
   enableNodeDragging(): void {
-    console.log(this);
     const edges = this.graph.edges;
     const updateEdgePoints = this.updateEdgePoints.bind(this);
     
@@ -394,6 +377,7 @@ export abstract class Renderer<V, E> {
 
     function nodeDragEnd(): void {
       console.log('node-drag end');
+      // FIXME: Reroute edges
     }
 
     const nodeDrag = d3.drag()
