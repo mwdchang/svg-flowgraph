@@ -1,9 +1,7 @@
-import { BasicRenderer } from './core';
-
-// const hello = (v: string): string => {
-//   return `Hello ${v}`;
-// };
+import { BasicRenderer, DeltaRenderer, Renderer } from './core';
 
 export {
-  BasicRenderer
+  Renderer,
+  BasicRenderer,
+  DeltaRenderer
 };
