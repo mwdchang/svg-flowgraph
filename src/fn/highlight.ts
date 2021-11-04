@@ -4,8 +4,8 @@ import { Renderer } from '../core';
 import { INode, IEdge } from '../types';
 
 interface HighlightOptions {
-  color: string;
-  duration: number;
+  color?: string;
+  duration?: number;
 }
 
 export const highlight = <V, E>(
@@ -83,5 +83,10 @@ export const highlight = <V, E>(
       });
   }
   return highlightId;
+};
+
+// Short cuts
+export const highlightNode = <V, E>(G:Renderer<V, E>, id: string, options: HighlightOptions): string => {
+  return highlight(G, [id], [], options);
 };
 

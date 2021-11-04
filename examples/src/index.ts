@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import { BasicRenderer } from '../../src/core/basic-renderer';
 // import { panGraph } from '../../src/actions/pan-graph';
 // import { moveTo } from '../../src/fn/move-to';
+import { highlight } from '../../src/fn/highlight';
 import { IGraph, INode, IEdge } from '../../src/types';
 
 interface NodeData {
@@ -47,7 +48,8 @@ div.style.width = '400px';
 document.body.append(div);
 
 const renderer = new SampleRenderer({
-  el: div
+  el: div,
+  useAStarRouting: true
 });
 renderer.on('node-click', () => { console.log('node click'); });
 renderer.on('node-dbl-click', () => { console.log('node double click'); });
@@ -87,6 +89,17 @@ const g:IGraph<NodeData, EdgeData> = {
       height: 40,
       nodes: [],
       data: { id: '123' }
+    },
+    {
+      id: '789',
+      label: '123',
+      x: 250,
+      y: 120,
+      width: 80,
+      height: 80,
+      nodes: [],
+      data: { id: '789' }
+
     }
   ],
   edges: [
@@ -95,10 +108,10 @@ const g:IGraph<NodeData, EdgeData> = {
       source: '123',
       target: '456',
       points: [
-        { x: 40, y: 40 },
+        { x: 60, y: 40 },
         { x: 240, y: 40 },
         { x: 240, y: 240 },
-        { x: 340, y: 240 },
+        { x: 320, y: 240 },
       ],
       data: { id: 'e1' }
     }
@@ -108,6 +121,7 @@ const g:IGraph<NodeData, EdgeData> = {
 const run = async () => {
   await renderer.setData(g);
   await renderer.render();
+  highlight(renderer, ['789'], [], {});
   // moveTo(renderer, '123', 2000);
 };
 

@@ -38,12 +38,13 @@ interface IGrid {
   h: number
 }
 type ColliderFn = (p: IPoint) => boolean
+
 export const getAStarPath = (
   start: IPoint,
   goal: IPoint,
   collider: ColliderFn,
   gridCell: IGrid = { w: 10, h: 10 },
-  searchLimit = 5000
+  searchLimit = 7000
 ): IPoint[] => {
   // Encoding helpers
   const PRIME = 756065179;

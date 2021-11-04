@@ -1,13 +1,15 @@
 import * as d3 from 'd3';
 import { EventEmitter } from './event-emitter';
 import { removeChildren } from '../utils/dom-util';
-import { traverseGraph, flattenGraph } from './traverse';
+import { traverseGraph, flattenGraph, getAStarPath } from './traverse';
 import { pointOnPath, translate } from '../utils/svg-util';
 
 import {
   INode, IEdge, IGraph, IRect, IPoint,
   D3Selection, D3SelectionIEdge, D3SelectionINode
 } from '../types';
+
+const PASS_THRU = <V, E>(g: IGraph<V, E>): IGraph<V, E> => g;
 
 interface Options {
   el?: HTMLDivElement
@@ -20,6 +22,7 @@ interface Options {
   useMinimap?: boolean
   useStableLayout?: boolean
   useStableZoomPan?: boolean
+  useAStarRouting?: boolean
 }
 
 export const pathFn = d3.line<{ x: number, y: number}>()
@@ -39,6 +42,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
   graph: IGraph<V, E> = null;
 
   // misc
+  isGraphDirty: boolean; // Graph layout has changed
   clickTimer: any;
   zoom: d3.ZoomBehavior<Element, unknown>;
   zoomTransformObject: d3.ZoomTransform = null;
@@ -125,6 +129,13 @@ export abstract class Renderer<V, E> extends EventEmitter {
       });
     }
 
+    // Check if we need to re-run layout
+    if (this.isGraphDirty === true) {
+      console.log('Rerung layout');
+      // FIXME: Rerun layout
+      this.calculateMaps();
+    }
+
     if (!this.chart) {
       this.createChartLayers();
     }
@@ -142,6 +153,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
     // Enable dragging nodes
     this.enableNodeDragging();
+
+    this.isGraphDirty = false;
   }
 
   updateEdgePoints(): void {
@@ -332,11 +345,30 @@ export abstract class Renderer<V, E> extends EventEmitter {
   }
 
   enableNodeDragging(): void {
+    const options = this.options;
     const edges = this.graph.edges;
+    const nodes = this.graph.nodes;
     const updateEdgePoints = this.updateEdgePoints.bind(this);
     
     let node: D3SelectionINode<V> = null;
     let nodeDraggingIds: string[] = [];
+
+    function collisionFn(p: IPoint) {
+      const buffer = 10;
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        // FIXME: Thi is  a hack to get around hierarhical geometries, will need to
+        // relax this guard.
+        // if (node.nodes && node.nodes.length > 0) continue;
+        if (p.x >= node.x - buffer && p.x <= node.x + node.width + buffer) {
+          if (p.y >= node.y - buffer && p.y <= node.y + node.height + buffer) {
+            console.log('hihi');
+            return true;
+          }
+        }
+      }
+      return false;
+    }
 
     function nodeDragStart(evt: any): void  {
       console.log('node-drag start', this);
@@ -381,6 +413,24 @@ export abstract class Renderer<V, E> extends EventEmitter {
     function nodeDragEnd(): void {
       console.log('node-drag end');
       // FIXME: Reroute edges
+      if (!options.useAStarRouting) return;
+      for (let i = 0; i < edges.length; i++) {
+        const edge = edges[i];
+        const source = edge.source;
+        const target = edge.target;
+
+        if (nodeDraggingIds.includes(source) || nodeDraggingIds.includes(target)) {
+          const points = edge.points;
+          const start = points[0];
+          const end = points[points.length - 1];
+          if (edge.source === edge.target) continue;
+          edge.points = getAStarPath(start, end, collisionFn, { w: 20, h: 20 });
+        }
+      }
+      updateEdgePoints();
+
+      // Clean up
+      nodeDraggingIds = [];
     }
 
     const nodeDrag = d3.drag()
