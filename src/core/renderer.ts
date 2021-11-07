@@ -9,11 +9,15 @@ import {
   D3Selection, D3SelectionIEdge, D3SelectionINode
 } from '../types';
 
-const PASS_THRU = <V, E>(g: IGraph<V, E>): IGraph<V, E> => g;
+// const PASS_THRU = <V, E>(g: IGraph<V, E>): IGraph<V, E> => g;
+
+type AsyncFunction <A,O> = (args: A) => Promise<O> 
+type LayoutFuncion <V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
 
 interface Options {
   el?: HTMLDivElement
-
+  runLayout: LayoutFuncion<any, any>
+  
   useEdgeControl?: boolean
   edgeControlOffsetType?: string
   edgeControlOffset?: number
@@ -42,7 +46,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
   graph: IGraph<V, E> = null;
 
   // misc
-  isGraphDirty: boolean; // Graph layout has changed
+  isGraphDirty: boolean = true; // Graph layout has changed
   clickTimer: any;
   zoom: d3.ZoomBehavior<Element, unknown>;
   zoomTransformObject: d3.ZoomTransform = null;
@@ -132,7 +136,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
     // Check if we need to re-run layout
     if (this.isGraphDirty === true) {
       console.log('Rerung layout');
-      // FIXME: Rerun layout
+      this.graph = await this.options.runLayout(this.graph);
       this.calculateMaps();
     }
 

@@ -13,10 +13,15 @@ export interface IPoint {
   y: number
 }
 
-export interface INode<T> extends IRect {
+export interface INode<T> {
   id: string
   label: string
+  type?: string
   state?: string
+  x?: number
+  y?: number
+  width?: number
+  height?: number
   data: T
   nodes: INode<T>[]
 }
@@ -25,7 +30,7 @@ export interface IEdge<T> {
   id: string
   source: string
   target: string
-  points: IPoint[]
+  points?: IPoint[]
   state?: string
   data: T
 }

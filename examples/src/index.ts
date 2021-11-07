@@ -1,9 +1,13 @@
+import _ from 'lodash';
 import * as d3 from 'd3';
 import { BasicRenderer } from '../../src/core/basic-renderer';
 // import { panGraph } from '../../src/actions/pan-graph';
 // import { moveTo } from '../../src/fn/move-to';
-import { highlight } from '../../src/fn/highlight';
+// import { highlight } from '../../src/fn/highlight';
+import { group, ungroup } from '../../src/fn/group';
 import { IGraph, INode, IEdge } from '../../src/types';
+
+import { runLayout  } from './dagre';
 
 interface NodeData {
   id: string
@@ -49,7 +53,8 @@ document.body.append(div);
 
 const renderer = new SampleRenderer({
   el: div,
-  useAStarRouting: true
+  useAStarRouting: true,
+  runLayout: runLayout
 });
 renderer.on('node-click', () => { console.log('node click'); });
 renderer.on('node-dbl-click', () => { console.log('node double click'); });
@@ -66,7 +71,7 @@ renderer.on('hello', (evtName: string, t: string) => {
 
 
 // Graph data
-const g:IGraph<NodeData, EdgeData> = {
+let g:IGraph<NodeData, EdgeData> = {
   width: 400,
   height: 400,
   nodes: [
@@ -97,9 +102,19 @@ const g:IGraph<NodeData, EdgeData> = {
       y: 120,
       width: 80,
       height: 80,
-      nodes: [],
+      nodes: [
+        {
+          id: '789-1',
+          label: '123',
+          x: 0,
+          y: 0,
+          width: 20,
+          height: 20,
+          nodes: [],
+          data: { id: '789-1' }
+        }
+      ],
       data: { id: '789' }
-
     }
   ],
   edges: [
@@ -114,15 +129,30 @@ const g:IGraph<NodeData, EdgeData> = {
         { x: 320, y: 240 },
       ],
       data: { id: 'e1' }
+    },
+    {
+      id: 'e1',
+      source: '789-1',
+      target: '456',
+      data: { id: 'e2' }
     }
   ]
 };
 
+g = runLayout(_.cloneDeep(g));
+
 const run = async () => {
   await renderer.setData(g);
   await renderer.render();
-  highlight(renderer, ['789'], [], {});
+  // highlight(renderer, ['789'], [], {});
   // moveTo(renderer, '123', 2000);
+
+  group(renderer, 'xyz', ['123', '456']);
+  renderer.render();
+
+  // ungroup(renderer, 'xyz');
+  // renderer.setData(runLayout(renderer.graph));
+  // renderer.render();
 };
 
 run();
