@@ -9,8 +9,6 @@ import {
   D3Selection, D3SelectionIEdge, D3SelectionINode
 } from '../types';
 
-// const PASS_THRU = <V, E>(g: IGraph<V, E>): IGraph<V, E> => g;
-
 type AsyncFunction <A,O> = (args: A) => Promise<O> 
 type LayoutFuncion <V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
 
@@ -47,6 +45,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
   // misc
   isGraphDirty: boolean = true; // Graph layout has changed
+  canLeverageStableLayout: boolean = false;
+
   clickTimer: any;
   zoom: d3.ZoomBehavior<Element, unknown>;
   zoomTransformObject: d3.ZoomTransform = null;
@@ -143,14 +143,17 @@ export abstract class Renderer<V, E> extends EventEmitter {
     if (!this.chart) {
       this.createChartLayers();
     }
+
+    this.canLeverageStableLayout = this.stableLayoutCheck();
+
+    this.setupDefs();
     this.setupNodes();
     this.setupEdges();
-
     if (this.options.useEdgeControl === true) {
       this.setupEdgeControls();
     }
 
-    // Enable various interactions
+    // Enable various interactions and emitter events
     this.chart.selectAll('.edge').call(this.enableEdgeInteraction, this);
     this.chart.selectAll('.node-ui').call(this.enableNodeInteraction, this);
     this.enableSVGInteraction(this);
@@ -275,7 +278,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
     });
 
     // Zoom control
-    const zoomed = (evt) =>  {
+    // FIXME: evt type
+    const zoomed = (evt: any) =>  {
       if (this.options.useZoom === false) return;
       chart.attr('transform', evt.transform);
     };
@@ -321,6 +325,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
   }
 
   setupEdgeControls(): void {
+    if (this.options.useEdgeControl === false) return;
     const chart = this.chart;
     const edges = chart.selectAll('.edge');
     const options = this.options;
@@ -340,7 +345,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
    * Try to keep layout stable across destructive actions where nodes/edges
    * counts will be smaller than before
    */
-  canLeverageStableLayout(): boolean {
+  stableLayoutCheck(): boolean {
     const chart = this.chart;
     const options = this.options;
     const flattened = flattenGraph(this.graph);
@@ -444,12 +449,14 @@ export abstract class Renderer<V, E> extends EventEmitter {
     this.chart.selectAll('.node').call(nodeDrag);
   }
 
+  // Need to overide
+  /* eslint-disable */
+  renderEdgeControls(_selection: D3SelectionIEdge<E>): void {}
 
-  // Need to implement or to overide
-  renderEdgeControls(selection: D3SelectionIEdge<E>): void {
-    console.log(selection);
-  }
+  /* eslint-disable */
+  setupDefs(): void {}
 
+  // Need to implement
   abstract setupNodes(): void
   abstract setupEdges(): void
 }
