@@ -1,39 +1,63 @@
 {
   "name": "svg-flowgraph",
-  "version": "0.4.8",
-  "description": "SVG-based renderering utilities for interacting with graphs",
-  "main": "dist/cjs/main.js",
-  "module": "dist/esm/main.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mwdchang/svg-flowgraph"
-  },
-  "scripts": {
-    "build": "rollup -c config/rollup.lib.js",
-    "dev": "rollup -c config/rollup.dev.js -w"
-  },
+  "version": "0.5.0",
+  "description": "SVG graph blueprint/renderer",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/mwdchang/svg-flowgraph",
+  "main": "build/lib/index.js",
+  "types": "build/types/index.d.ts",
+  "type": "module",
   "files": [
-    "dist"
+    "build/dist",
+    "build/lib",
+    "build/types"
   ],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "graph",
+    "svg"
+  ],
+  "scripts": {
+    "build": "run-p build:all build:types",
+    "build:all": "node esbuild.mjs --all",
+    "build:dist": "node esbuild.mjs --dist",
+    "build:examples": "node esbuild.mjs --examples",
+    "build:lib": "node esbuild.mjs --lib",
+    "build:types": "tsc --declaration --emitDeclarationOnly --skipLibCheck --project ./tsconfig.d.json --outDir ./build/types",
+    "clean": "run-p clean:**",
+    "clean:build": "rimraf build",
+    "clean:cache": "rimraf .rts2_cache",
+    "watch": "run-p watch:*",
+    "watch:scripts": "yarn build:all --watch",
+    "watch:types": "yarn build:types --watch",
+    "develop": "yarn build:examples --watch --dev-server",
+    "esbuild": "node esbuild.mjs",
+    "examples": "run-s build:examples",
+    "test": "jest",
+    "lint": "eslint --fix --config ./.eslintrc.cjs \"./{src,tests,examples}/**/*.{js,ts}\""
+  },
+  "dependencies": {
+    "d3": "^7.1.1",
+    "lodash": "^4.17.21"
+  },
   "devDependencies": {
-    "@babel/core": "^7.12.9",
-    "@babel/preset-env": "^7.12.7",
-    "@rollup/plugin-babel": "^5.2.2",
-    "@rollup/plugin-commonjs": "^16.0.0",
-    "@rollup/plugin-node-resolve": "^10.0.0",
-    "d3": "^6.3.0",
-    "eslint": "^7.15.0",
-    "eslint-config-standard": "^16.0.2",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "lodash": "^4.17.20",
-    "rollup": "^2.34.2",
-    "rollup-plugin-eslint": "^7.0.0",
-    "rollup-plugin-livereload": "^2.0.0",
-    "rollup-plugin-serve": "^1.1.0",
-    "rollup-plugin-terser": "^7.0.2"
+    "@types/d3": "^7.1.0",
+    "@types/jest": "^26.0.23",
+    "@typescript-eslint/eslint-plugin": "^4.25.0",
+    "@typescript-eslint/parser": "^4.25.0",
+    "copy": "^0.3.2",
+    "dagre": "^0.8.5",
+    "esbuild": "^0.12.11",
+    "esbuild-jest": "^0.5.0",
+    "eslint": "^7.27.0",
+    "eslint-config-esnext": "^4.1.0",
+    "eslint-plugin-import": "^2.23.3",
+    "globby": "^11.0.1",
+    "jest": "^27.0.5",
+    "live-server": "^1.2.1",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^3.0.2",
+    "run-p": "^0.0.0",
+    "typescript": "^4.1.2",
+    "yargs": "^16.2.0"
   }
 }

@@ -1,4 +1,4 @@
-export const removeChildren = (parentElement) => {
+export const removeChildren = (parentElement: HTMLElement): HTMLElement => {
   while (parentElement.firstChild) {
     parentElement.removeChild(parentElement.firstChild);
   }
