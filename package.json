@@ -1,10 +1,9 @@
 {
-  "name": "@uncharted.software/bgraph",
-  "version": "0.3.2",
-  "description": "bgraph is an in-memory browser-compatible graph database",
-  "author": "Uncharted Software",
+  "name": "svg-flowgraph",
+  "version": "0.5.0",
+  "description": "SVG graph blueprint/renderer",
   "license": "Apache-2.0",
-  "repository": "https://github.com/uncharted-aske/bgraph",
+  "repository": "https://github.com/mwdchang/svg-flowgraph",
   "main": "build/lib/index.js",
   "types": "build/types/index.d.ts",
   "type": "module",
@@ -15,9 +14,7 @@
   ],
   "keywords": [
     "graph",
-    "query",
-    "database",
-    "memory"
+    "svg"
   ],
   "scripts": {
     "build": "run-p build:all build:types",
@@ -55,15 +52,11 @@
     "eslint-config-esnext": "^4.1.0",
     "eslint-plugin-import": "^2.23.3",
     "globby": "^11.0.1",
-    "glslify": "^7.1.1",
     "jest": "^27.0.5",
-    "lit-element": "^2.4.0",
-    "lit-html": "^1.3.0",
     "live-server": "^1.2.1",
     "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.2",
     "run-p": "^0.0.0",
-    "tweakpane": "^1.5.7",
     "typescript": "^4.1.2",
     "yargs": "^16.2.0"
   }
