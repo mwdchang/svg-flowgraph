@@ -8,7 +8,7 @@ export abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
   setupNodes(): void {
     const chart = this.chart.select('.nodes-layer');
     const oldNodeMap = this.oldNodeMap;
-    const useStableLayout = this.canLeverageStableLayout();
+    const useStableLayout = this.canLeverageStableLayout;
 
     const _recursiveBuild = (selection: D3Selection, childrenNodes: INode<V>[]) => {
       if (!childrenNodes) return;
@@ -65,7 +65,7 @@ export abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
   setupEdges(): void {
     const chart = this.chart;
     const oldEdgeMap = this.oldEdgeMap;
-    const useStableLayout = this.canLeverageStableLayout();
+    const useStableLayout = this.canLeverageStableLayout;
 
     const allEdges = this.graph.edges;
 
