@@ -1,3 +1,4 @@
+// Not sure why I can't name this index.d.ts, when I do tsc skips it from generating in the build
 export type EventCallback = (type: string | symbol, ...args: any[]) => void;
 export type EventName = string | symbol;
 
