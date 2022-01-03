@@ -19,10 +19,10 @@ export interface INode<T> {
   label: string
   type?: string
   state?: string
-  x?: number
-  y?: number
-  width?: number
-  height?: number
+  x: number
+  y: number
+  width: number
+  height: number
   data: T
   nodes: INode<T>[]
 }
@@ -31,7 +31,7 @@ export interface IEdge<T> {
   id: string
   source: string
   target: string
-  points?: IPoint[]
+  points: IPoint[]
   state?: string
   data: T
 }

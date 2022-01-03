@@ -159,7 +159,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
     this.enableSVGInteraction(this);
 
     // Enable dragging nodes
-    this.enableNodeDragging();
+    this.enableNodeDragging(this);
 
     this.isGraphDirty = false;
   }
@@ -271,7 +271,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
     svg.on('dblclick', function (evt) {
       evt.stopPropagation();
       const pointerCoords = d3.zoomTransform(svg.node()).invert(d3.pointer(evt));
-      emit('dbl-click', evt, d3.select(this), renderer, {
+      emit('background-dbl-click', evt, d3.select(this), renderer, {
         x: pointerCoords[0],
         y: pointerCoords[1]
       });
@@ -353,11 +353,12 @@ export abstract class Renderer<V, E> extends EventEmitter {
     return options.useStableLayout && numNodes <= chart.selectAll('.node').size();
   }
 
-  enableNodeDragging(): void {
+  enableNodeDragging(renderer: Renderer<V, E>): void {
     const options = this.options;
     const edges = this.graph.edges;
     const nodes = this.graph.nodes;
     const updateEdgePoints = this.updateEdgePoints.bind(this);
+    const emitWrapper = renderer.emit.bind(renderer);
     
     let node: D3SelectionINode<V> = null;
     let nodeDraggingIds: string[] = [];
@@ -371,7 +372,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
         // if (node.nodes && node.nodes.length > 0) continue;
         if (p.x >= node.x - buffer && p.x <= node.x + node.width + buffer) {
           if (p.y >= node.y - buffer && p.y <= node.y + node.height + buffer) {
-            console.log('hihi');
             return true;
           }
         }
@@ -380,16 +380,16 @@ export abstract class Renderer<V, E> extends EventEmitter {
     }
 
     function nodeDragStart(evt: any): void  {
-      console.log('node-drag start', this);
       evt.sourceEvent.stopPropagation();
 
       node = d3.select(this) as D3SelectionINode<V>;
       const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
-      nodeDraggingIds = [node.datum().id, ...childrenNodes.data().map(d => d.id)];
+      nodeDraggingIds = [node.datum().label, ...childrenNodes.data().map(d => d.label)];
+
+      emitWrapper('node-drag-start', evt, node, renderer);
     }
 
     function nodeDragMove(evt: any) {
-      console.log('node-drag move');
       const dx = evt.dx;
       const dy = evt.dy;
 
@@ -417,10 +417,10 @@ export abstract class Renderer<V, E> extends EventEmitter {
         }
       }
       updateEdgePoints();
+      emitWrapper('node-drag-move', evt, node, renderer);
     }
 
-    function nodeDragEnd(): void {
-      console.log('node-drag end');
+    function nodeDragEnd(evt: any): void {
       // FIXME: Reroute edges
       if (!options.useAStarRouting) return;
       for (let i = 0; i < edges.length; i++) {
@@ -440,6 +440,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
       // Clean up
       nodeDraggingIds = [];
+      emitWrapper('node-drag-end', evt, node, renderer);
     }
 
     const nodeDrag = d3.drag()

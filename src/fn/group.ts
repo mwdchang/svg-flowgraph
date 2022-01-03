@@ -28,7 +28,11 @@ export const group = <V, E>(
     label: groupName,
     type: 'custom',
     nodes: [],
-    data: null
+    data: null,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0
   };
 
 
