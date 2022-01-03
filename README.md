@@ -10,56 +10,29 @@ The example provided here uses Dagre (https://github.com/dagrejs/dagre).
 ![example2](example2.png)
 
 
-### API and modules
-Initialization
-- el: Container element
-- adapter: Adapter instance
-- useEdgeControl: Whether to allocate an additional interactive element to an edge.
-- useMinimap: Whether to show the mini-map
-- useZoom: Whether to enable user initiated zoom/pan
-- addons: List of additional modules
+### Usage
+
+### Data format
+
+### Events
+These event hooks are emitted for customizing logic, emitters send back these parameters: eventName, event object, selection, renderer object.
+- node-click
+- node-dbl-click
+- node-mouse-enter
+- node-mouse-leave
+- node-drag-start
+- node-drag-move
+- node-drag-end
+- edge-click
+- edge-mouse-enter
+- edge-mouse-leave
+- background-click, also sends clicked coordinates
+- background-dbl-click, also send clicked coordinates
+
+Example:
 
 ```
-class MytRenderer extends SVGRenderer {
-  ...
-}
-
-// Create renderer
-const renderer = new MyRenderer({
-  el: document.getElementById('test'),
-  adapter: new DAGREAdapter({ nodeWidth: 100, nodeHeight: 50 }),
-  renderMode: 'basic',
-  useEdgeControl: true,
-  useMinimap: true,
-  addons: [ group, nodeSize, highlight, nodeDrag, expandCollapse, panZoom ]
+renderer.on('node-dbl-click', (name, evt, selection, renderer) => {
+  selection.selectAll('text').style('font-size', 15);
 });
-
-// Run
-renderer.setData(graph);
-renderer.render().then(() => {
-  // Call an add-on function
-  renderer.enableDrag(true);
-});
-
-```
-
-Addons
-- expandCollapse: Expand/collapse nested groups
-- group: Create artificial nested groups
-- highlight: Gaussian blur highlights
-- nodeDrag: Node dragging
-- nodeSize: Node resizing
-- panZoom: Programmatic navigation
-
-
-
-### Build
-Build into dist
-```
-npm run build
-```
-
-### Test/Demo
-```
-npm run dev
 ```
