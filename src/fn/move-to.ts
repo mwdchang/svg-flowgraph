@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { Renderer } from '../core';
-import { INode } from '../types';
+import { INode, D3SelectionINode } from '../types';
 
 /**
  * Centralize provided node in the SVG canvas
@@ -14,7 +14,7 @@ import { INode } from '../types';
  */
 export const moveTo = <V, E>(
   G: Renderer<V, E>,
-  nodeId: string, 
+  node: D3SelectionINode<V>,
   duration: number
 ): void => {
   const chart = G.chart;
@@ -28,7 +28,6 @@ export const moveTo = <V, E>(
   const t = d3.zoomTransform(chart.node() as Element);
 
   // const node = flatten(G.layout).nodes.find(n => n.id === nodeId);
-  const node = chart.selectAll('.node').filter((d: INode<V>) => d.id === nodeId);
   if (!node) return;
 
   const parentMap = G.parentMap;
@@ -57,3 +56,13 @@ export const moveTo = <V, E>(
   );
 };
 
+export const moveToLabel = <V, E>(
+  G: Renderer<V, E>,
+  label: string,
+  duration: number
+): void => {
+  const chart = G.chart;
+  const node = chart.selectAll('.node').filter((d: INode<V>) => d.label === label);
+  if (!node) return;
+  moveTo(G, node as D3SelectionINode<V>, duration);
+};

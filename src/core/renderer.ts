@@ -29,7 +29,9 @@ interface Options {
 
 export const pathFn = d3.line<{ x: number, y: number}>()
   .x(d => d.x)
-  .y(d => d.y);
+  .y(d => d.y)
+  .curve(d3.curveBasis); // FIXME: temp hack
+
 
 export abstract class Renderer<V, E> extends EventEmitter {
   options: Options;
@@ -363,6 +365,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
     let node: D3SelectionINode<V> = null;
     let nodeDraggingIds: string[] = [];
 
+    let sufficientlyMoved = false;
+
     function collisionFn(p: IPoint) {
       const buffer = 10;
       for (let i = 0; i < nodes.length; i++) {
@@ -386,12 +390,15 @@ export abstract class Renderer<V, E> extends EventEmitter {
       const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
       nodeDraggingIds = [node.datum().label, ...childrenNodes.data().map(d => d.label)];
 
+      sufficientlyMoved = false;
       emitWrapper('node-drag-start', evt, node, renderer);
     }
 
     function nodeDragMove(evt: any) {
       const dx = evt.dx;
       const dy = evt.dy;
+
+      sufficientlyMoved = true;
 
       node.datum().x += dx;
       node.datum().y += dy;
@@ -422,21 +429,22 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
     function nodeDragEnd(evt: any): void {
       // FIXME: Reroute edges
-      if (!options.useAStarRouting) return;
-      for (let i = 0; i < edges.length; i++) {
-        const edge = edges[i];
-        const source = edge.source;
-        const target = edge.target;
+      if (options.useAStarRouting && sufficientlyMoved) {
+        for (let i = 0; i < edges.length; i++) {
+          const edge = edges[i];
+          const source = edge.source;
+          const target = edge.target;
 
-        if (nodeDraggingIds.includes(source) || nodeDraggingIds.includes(target)) {
-          const points = edge.points;
-          const start = points[0];
-          const end = points[points.length - 1];
-          if (edge.source === edge.target) continue;
-          edge.points = getAStarPath(start, end, collisionFn, { w: 20, h: 20 });
+          if (nodeDraggingIds.includes(source) || nodeDraggingIds.includes(target)) {
+            const points = edge.points;
+            const start = points[0];
+            const end = points[points.length - 1];
+            if (edge.source === edge.target) continue;
+            edge.points = getAStarPath(start, end, collisionFn, { w: 20, h: 20 });
+          }
         }
+        updateEdgePoints();
       }
-      updateEdgePoints();
 
       // Clean up
       nodeDraggingIds = [];
