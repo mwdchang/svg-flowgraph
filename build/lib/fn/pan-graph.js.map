@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../src/fn/pan-graph.ts"],
+  "sourcesContent": ["import * as d3 from 'd3';\nimport { Renderer } from '../core';\n\nexport const panGraph = <V, E>(\n  G: Renderer<V, E>,\n  x: number, \n  y: number, \n  duration: number\n): void => {\n  const chart = G.chart;\n  const t = d3.zoomTransform(chart.node() as Element);\n  const svg = d3.select(G.svgEl);\n  svg.transition().duration(duration).call(\n    G.zoom.transform,\n    d3.zoomIdentity.translate(t.x, t.y).scale(t.k).translate(x, y)\n  );\n};\n"],
+  "mappings": ";AAAA;AAAA;AAAA;AAAA;AAAA;AAGO,IAAM,WAAW,CACtB,GACA,GACA,GACA,aACS;AACT,QAAM,QAAQ,EAAE;AAChB,QAAM,IAAI,AAAG,cAAc,MAAM;AACjC,QAAM,MAAM,AAAG,OAAO,EAAE;AACxB,MAAI,aAAa,SAAS,UAAU,KAClC,EAAE,KAAK,WACP,AAAG,aAAa,UAAU,EAAE,GAAG,EAAE,GAAG,MAAM,EAAE,GAAG,UAAU,GAAG;AAAA;",
+  "names": []
+}

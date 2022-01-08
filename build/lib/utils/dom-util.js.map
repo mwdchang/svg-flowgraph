@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../src/utils/dom-util.ts"],
+  "sourcesContent": ["export const removeChildren = (parentElement: HTMLElement): HTMLElement => {\n  while (parentElement.firstChild) {\n    parentElement.removeChild(parentElement.firstChild);\n  }\n  return parentElement;\n};\n"],
+  "mappings": ";AAAO,IAAM,iBAAiB,CAAC,kBAA4C;AACzE,SAAO,cAAc,YAAY;AAC/B,kBAAc,YAAY,cAAc;AAAA;AAE1C,SAAO;AAAA;",
+  "names": []
+}

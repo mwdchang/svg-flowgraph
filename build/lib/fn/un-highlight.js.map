@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../src/fn/un-highlight.ts"],
+  "sourcesContent": ["import * as d3 from 'd3';\nimport { Renderer } from '../core';\n\nexport const unHighlight = <V, E>(\n  G: Renderer<V, E>,\n  id: string\n): void => {\n  const svg = d3.select(G.svgEl);\n  svg.select(`#${id}`).remove();\n  svg.selectAll(`.${id}`).style('filter', null);\n};\n"],
+  "mappings": ";AAAA;AAAA;AAAA;AAGO,IAAM,cAAc,CACzB,GACA,OACS;AACT,QAAM,MAAM,AAAG,OAAO,EAAE;AACxB,MAAI,OAAO,IAAI,MAAM;AACrB,MAAI,UAAU,IAAI,MAAM,MAAM,UAAU;AAAA;",
+  "names": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../src/utils/svg-util.ts"],
+  "sourcesContent": ["export const translate = (x: number, y: number): string => {\n  return `translate(${x}, ${y})`;\n};\n\nexport const pointOnPath = (\n  pathNode: SVGPathElement,\n  offsetType: string,\n  offsetValue: number\n): DOMPoint => {\n  let pos = 0;\n  const total = pathNode.getTotalLength();\n  if (offsetType === 'percentage') {\n    pos = offsetValue * total;\n  } else {\n    pos = offsetValue > 0 ? offsetValue : Math.max(0, (total + offsetValue));\n  }\n  const controlPoint = pathNode.getPointAtLength(pos);\n  return controlPoint;\n};\n"],
+  "mappings": ";AAAO,IAAM,YAAY,CAAC,GAAW,MAAsB;AACzD,SAAO,aAAa,MAAM;AAAA;AAGrB,IAAM,cAAc,CACzB,UACA,YACA,gBACa;AACb,MAAI,MAAM;AACV,QAAM,QAAQ,SAAS;AACvB,MAAI,eAAe,cAAc;AAC/B,UAAM,cAAc;AAAA,SACf;AACL,UAAM,cAAc,IAAI,cAAc,KAAK,IAAI,GAAI,QAAQ;AAAA;AAE7D,QAAM,eAAe,SAAS,iBAAiB;AAC/C,SAAO;AAAA;",
+  "names": []
+}
