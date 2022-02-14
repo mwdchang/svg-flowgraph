@@ -12,12 +12,14 @@ import {
 type AsyncFunction <A,O> = (args: A) => Promise<O> 
 type LayoutFuncion <V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
 
+type EdgeOffsetType = 'percentage' | 'absolute';
+
 interface Options {
   el?: HTMLDivElement
   runLayout: LayoutFuncion<any, any>
   
   useEdgeControl?: boolean
-  edgeControlOffsetType?: string
+  edgeControlOffsetType?: EdgeOffsetType
   edgeControlOffset?: number
 
   useZoom?: boolean
@@ -31,7 +33,6 @@ export const pathFn = d3.line<{ x: number, y: number}>()
   .x(d => d.x)
   .y(d => d.y)
   .curve(d3.curveBasis); // FIXME: temp hack
-
 
 export abstract class Renderer<V, E> extends EventEmitter {
   options: Options;
@@ -335,11 +336,12 @@ export abstract class Renderer<V, E> extends EventEmitter {
     edges.each(function() {
       const pathNode = d3.select(this).select('path').node() as SVGPathElement;
       const controlPoint = pointOnPath(pathNode, options.edgeControlOffsetType, options.edgeControlOffset);
+
       d3.select(this).append('g')
         .classed('edge-control', true)
         .attr('transform', translate(controlPoint.x, controlPoint.y));
     });
-    chart.selectAll('.edge-control').call(this.renderEdgeControls);
+    this.renderEdgeControls(edges as D3SelectionIEdge<E>);
   }
 
   /**
@@ -428,7 +430,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
     }
 
     function nodeDragEnd(evt: any): void {
-      // FIXME: Reroute edges
       if (options.useAStarRouting && sufficientlyMoved) {
         for (let i = 0; i < edges.length; i++) {
           const edge = edges[i];
