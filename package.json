@@ -1,6 +1,6 @@
 {
   "name": "svg-flowgraph",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "SVG graph blueprint/renderer",
   "license": "Apache-2.0",
   "repository": "https://github.com/mwdchang/svg-flowgraph",
