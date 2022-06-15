@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import { EventEmitter } from './event-emitter';
 import { removeChildren } from '../utils/dom-util';
 import { traverseGraph, flattenGraph, getAStarPath } from './traverse';
-import { pointOnPath, translate } from '../utils/svg-util';
+import { translate } from '../utils/svg-util';
 
 import {
   INode, IEdge, IGraph, IRect, IPoint,
@@ -12,16 +12,12 @@ import {
 type AsyncFunction <A,O> = (args: A) => Promise<O> 
 type LayoutFuncion <V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
 
-type EdgeOffsetType = 'percentage' | 'absolute';
+// type EdgeOffsetType = 'percentage' | 'absolute';
 
 interface Options {
   el?: HTMLDivElement
   runLayout: LayoutFuncion<any, any>
   
-  useEdgeControl?: boolean
-  edgeControlOffsetType?: EdgeOffsetType
-  edgeControlOffset?: number
-
   bubbleNativeEvents: boolean
   useZoom?: boolean
   useStableLayout?: boolean
@@ -152,9 +148,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
     this.setupDefs();
     this.setupNodes();
     this.setupEdges();
-    if (this.options.useEdgeControl === true) {
-      this.setupEdgeControls();
-    }
 
     // Enable various interactions and emitter events
     this.chart.selectAll('.edge').call(this.enableEdgeInteraction, this);
@@ -173,18 +166,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
     chart.selectAll('.edge').selectAll('path').attr('d', (d: IEdge<E>) => {
       return pathFn(d.points);
     });
-
-    if (options.useEdgeControl) {
-      chart.selectAll('.edge').each(function() {
-        const pathNode = d3.select(this).select('path').node() as SVGPathElement;
-        const controlPoint = pointOnPath(
-          pathNode,
-          options.edgeControlOffsetType,
-          options.edgeControlOffset);
-        d3.select(this).select('.edge-control')
-          .attr('transform', translate(controlPoint.x, controlPoint.y));
-      });
-    }
   }
 
 
@@ -312,22 +293,21 @@ export abstract class Renderer<V, E> extends EventEmitter {
     );
   }
 
-  setupEdgeControls(): void {
-    if (this.options.useEdgeControl === false) return;
-    const chart = this.chart;
-    const edges = chart.selectAll('.edge');
-    const options = this.options;
-    edges.selectAll('.edge-control').remove();
-    edges.each(function() {
-      const pathNode = d3.select(this).select('path').node() as SVGPathElement;
-      const controlPoint = pointOnPath(pathNode, options.edgeControlOffsetType, options.edgeControlOffset);
-
-      d3.select(this).append('g')
-        .classed('edge-control', true)
-        .attr('transform', translate(controlPoint.x, controlPoint.y));
-    });
-    this.renderEdgeControls(edges as D3SelectionIEdge<E>);
-  }
+  // setupEdgeControls(): void {
+  //   if (this.options.useEdgeControl === false) return;
+  //   const chart = this.chart;
+  //   const edges = chart.selectAll('.edge');
+  //   const options = this.options;
+  //   edges.selectAll('.edge-control').remove();
+  //   edges.each(function() {
+  //     const pathNode = d3.select(this).select('path').node() as SVGPathElement;
+  //     const controlPoint = pointOnPath(pathNode, options.edgeControlOffsetType, options.edgeControlOffset);
+  //     d3.select(this).append('g')
+  //       .classed('edge-control', true)
+  //       .attr('transform', translate(controlPoint.x, controlPoint.y));
+  //   });
+  //   this.renderEdgeControls(edges as D3SelectionIEdge<E>);
+  // }
 
   /**
    * FIXME: Just a simple count, need to handle hierarchies
