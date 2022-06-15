@@ -22,8 +22,8 @@ interface Options {
   edgeControlOffsetType?: EdgeOffsetType
   edgeControlOffset?: number
 
+  bubbleNativeEvents: boolean
   useZoom?: boolean
-  useMinimap?: boolean
   useStableLayout?: boolean
   useStableZoomPan?: boolean
   useAStarRouting?: boolean
@@ -138,7 +138,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
     // Check if we need to re-run layout
     if (this.isGraphDirty === true) {
-      console.log('Rerung layout');
+      console.log('Rerun layout');
       this.graph = await this.options.runLayout(this.graph);
       this.calculateMaps();
     }
@@ -288,23 +288,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
     };
     const zoomEnd = () => {
       if (!this.graph) return;
-
       this.zoomTransformObject = d3.zoomTransform(chart.node() as Element);
-
-      if (this.options.useMinimap === false || this.options.useZoom === false) return;
-      const { x1, y1, x2, y2 } = this.getBoundary();
-      const minimap = d3.select(this.svgEl).select('.foreground-layer').select('.minimap');
-      minimap.select('.current-view').remove();
-      minimap.append('rect')
-        .classed('current-view', true)
-        .attr('x', x1)
-        .attr('y', y1)
-        .attr('width', x2)
-        .attr('height', y2)
-        .attr('stroke', '#000')
-        .attr('stroke-width', 1)
-        .attr('fill', '#369')
-        .attr('fill-opacity', 0.1);
+      emit('zoom-end', {});
     };
 
     const minZoom = 0.05;
