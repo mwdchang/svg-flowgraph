@@ -12,8 +12,6 @@ import {
 type AsyncFunction <A,O> = (args: A) => Promise<O> 
 type LayoutFuncion <V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
 
-// type EdgeOffsetType = 'percentage' | 'absolute';
-
 interface Options {
   el?: HTMLDivElement
   runLayout: LayoutFuncion<any, any>
@@ -292,22 +290,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
       d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(zoomX, zoomY)
     );
   }
-
-  // setupEdgeControls(): void {
-  //   if (this.options.useEdgeControl === false) return;
-  //   const chart = this.chart;
-  //   const edges = chart.selectAll('.edge');
-  //   const options = this.options;
-  //   edges.selectAll('.edge-control').remove();
-  //   edges.each(function() {
-  //     const pathNode = d3.select(this).select('path').node() as SVGPathElement;
-  //     const controlPoint = pointOnPath(pathNode, options.edgeControlOffsetType, options.edgeControlOffset);
-  //     d3.select(this).append('g')
-  //       .classed('edge-control', true)
-  //       .attr('transform', translate(controlPoint.x, controlPoint.y));
-  //   });
-  //   this.renderEdgeControls(edges as D3SelectionIEdge<E>);
-  // }
 
   /**
    * FIXME: Just a simple count, need to handle hierarchies

@@ -1,10 +1,11 @@
 import {
   BasicRenderer, DeltaRenderer, Renderer,
-  traverseGraph, traverseNode, getAStarPath
+  flattenGraph, traverseGraph, traverseNode, getAStarPath
 } from './core';
 
 import { simplifyPath } from './utils/simplify';
 import { moveTo, moveToLabel } from './fn/move-to';
+import { group, ungroup } from './fn/group';
 import { highlight } from './fn/highlight';
 import { unHighlight } from './fn/un-highlight';
 
@@ -17,6 +18,7 @@ export {
   BasicRenderer,
   DeltaRenderer,
 
+  flattenGraph,
   traverseGraph,
   traverseNode,
   getAStarPath,
@@ -25,6 +27,8 @@ export {
   moveToLabel,
   highlight,
   unHighlight,
+  group,
+  ungroup,
 
   INode,
   IEdge,

@@ -41,6 +41,8 @@ export const group = <V, E>(
     const parentData = G.parentMap.get(nodesData[0].id);
     nodeIds.forEach(nodeId => {
       const temp = _.remove(parentData.nodes, (node: INode<V>) => node.id === nodeId)[0];
+      temp.x = 0;
+      temp.y = 0;
 
       // Need to create a new node wrapper to avoid double pointers problem
       const newNode = { ...temp };
@@ -53,6 +55,8 @@ export const group = <V, E>(
     // 1) Move nodes to new group
     nodeIds.forEach(nodeId => {
       const temp = _.remove(G.graph.nodes, (node: INode<V>) => node.id === nodeId)[0];
+      temp.x = 0;
+      temp.y = 0;
 
       // Need to create a new node wrapper to avoid double pointers problem
       const newNode = { ...temp };
